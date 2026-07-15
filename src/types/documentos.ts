@@ -53,6 +53,7 @@ export interface Documento {
   tipo_mime: string;
   tipo_arquivo: "pdf" | "imagem";
   tamanho_bytes: number;
+  total_paginas: number | null;
   status: StatusDocumento;
   revisado: boolean;
   codigo_erro: string | null;
@@ -89,4 +90,3 @@ export interface CorrecaoCampo {
   valor?: string | null;
   confirmado?: boolean;
 }
-
