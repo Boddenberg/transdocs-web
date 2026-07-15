@@ -1,6 +1,14 @@
 "use client";
 
-import { Archive, ChevronDown, LogOut, MessageSquarePlus, ScanLine, Settings2 } from "lucide-react";
+import {
+  Archive,
+  ChevronDown,
+  FilePenLine,
+  LogOut,
+  MessageSquarePlus,
+  ScanLine,
+  Settings2
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -12,6 +20,7 @@ import { useAutenticacao } from "@/contexts/autenticacao";
 
 const navegacao = [
   { href: "/app", rotulo: "Bancada", icone: ScanLine },
+  { href: "/app/preenchimentos", rotulo: "Preencher", icone: FilePenLine },
   { href: "/app/documentos", rotulo: "Documentos", icone: Archive },
   { href: "/app/configuracoes", rotulo: "Configurações", icone: Settings2 }
 ];

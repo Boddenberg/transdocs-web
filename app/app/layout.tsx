@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import "./aplicacao.css";
 import "./analise.css";
+import "./preenchimentos/preenchimento.css";
 
 import { ShellAplicacao } from "@/components/aplicacao/shell-aplicacao";
 

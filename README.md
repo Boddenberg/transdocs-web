@@ -1,6 +1,6 @@
 # ThiagoDocs Web
 
-Aplicação Next.js para envio, leitura assistida e conferência humana de documentos.
+Aplicação Next.js para envio, leitura assistida, preenchimento e conferência humana de documentos.
 O front é independente da Padoka e se comunica somente com a API `transdocs` e com um
 projeto Supabase Auth exclusivo.
 
@@ -24,6 +24,9 @@ Fluxos implementados:
 - bancada inicial com upload por clique ou arrastar/soltar;
 - progresso e cancelamento do upload;
 - histórico com pesquisa por arquivo ou qualquer dado extraído, filtros e exclusão permanente;
+- preenchimento de minuta DOCX por tipo, com fontes opcionais organizadas por categoria;
+- mapa de lacunas com valor, fonte, trecho, confiança e seleção explícita antes da geração;
+- retomada de casos salvos, reenvio de documentos faltantes e download parcial ou completo;
 - ficha resumida de alta densidade com cópia individual, com títulos ou somente valores, além da conferência detalhada;
 - acompanhamento moderado de processamento (3 s em primeiro plano, 12 s oculto);
 - visualizador de PDF/imagem e navegação por páginas;
@@ -42,7 +45,7 @@ Fluxos implementados:
 ```text
 app/
 ├── auth/                       # entrada e recuperação
-└── app/                        # área protegida, histórico e análise
+└── app/                        # área protegida, histórico, análise e preenchimento
 src/
 ├── components/aplicacao/       # shell e navegação
 ├── components/autenticacao/    # cena de entrada
@@ -104,6 +107,10 @@ URLs temporárias.
 O acompanhamento de documentos pendentes usa `setTimeout` após cada resposta, evitando
 requisições sobrepostas. Ele para em qualquer estado terminal e reduz frequência quando a
 aba fica oculta.
+
+O preenchimento segue a mesma estratégia de acompanhamento. Valores encontrados em texto
+só são pré-selecionados quando a evidência literal passa na validação do servidor; leituras
+visuais permanecem desmarcadas para conferência humana.
 
 ## Deploy no Railway
 

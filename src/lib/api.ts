@@ -9,6 +9,12 @@ import type {
   UrlDocumento
 } from "@/types/documentos";
 import type { NovaSugestao, SugestaoCriada } from "@/types/sugestoes";
+import type {
+  ArquivoPreenchimento,
+  FonteSelecionada,
+  Preenchimento,
+  TipoPreenchimento
+} from "@/types/preenchimentos";
 
 type Metodo = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -156,8 +162,91 @@ export const api = {
         metodo: "DELETE",
         semCorpo: true
       })
+  },
+  preenchimentos: {
+    tipos: () => requisitar<TipoPreenchimento[]>("/api/v1/preenchimentos/tipos"),
+    listar: () => requisitar<Preenchimento[]>("/api/v1/preenchimentos?limite=20"),
+    buscar: (id: string, sinal?: AbortSignal) =>
+      requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}`, { sinal }),
+    gerar: (id: string, camposIncluir: string[], permitirIncompleto: boolean) =>
+      requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}/gerar`, {
+        metodo: "POST",
+        corpo: {
+          campos_incluir: camposIncluir,
+          permitir_incompleto: permitirIncompleto
+        }
+      }),
+    arquivo: (id: string) =>
+      requisitar<ArquivoPreenchimento>(`/api/v1/preenchimentos/${id}/arquivo`)
   }
 };
+
+export async function criarPreenchimento(
+  tipoDocumento: string,
+  arquivoBase: File,
+  fontes: FonteSelecionada[],
+  repetirAposRefresh = false
+): Promise<Preenchimento> {
+  const formulario = new FormData();
+  formulario.append("tipo_documento", tipoDocumento);
+  formulario.append("arquivo_base", arquivoBase);
+  fontes.forEach((fonte) => {
+    formulario.append("categorias_fontes", fonte.categoria);
+    formulario.append("arquivos_fontes", fonte.arquivo);
+  });
+  return enviarFormularioPreenchimento(
+    "/api/v1/preenchimentos",
+    formulario,
+    repetirAposRefresh,
+    () => criarPreenchimento(tipoDocumento, arquivoBase, fontes, true)
+  );
+}
+
+export async function adicionarFontesPreenchimento(
+  id: string,
+  fontes: FonteSelecionada[],
+  repetirAposRefresh = false
+): Promise<Preenchimento> {
+  const formulario = new FormData();
+  fontes.forEach((fonte) => {
+    formulario.append("categorias_fontes", fonte.categoria);
+    formulario.append("arquivos_fontes", fonte.arquivo);
+  });
+  return enviarFormularioPreenchimento(
+    `/api/v1/preenchimentos/${id}/fontes`,
+    formulario,
+    repetirAposRefresh,
+    () => adicionarFontesPreenchimento(id, fontes, true)
+  );
+}
+
+async function enviarFormularioPreenchimento(
+  caminho: string,
+  formulario: FormData,
+  repetirAposRefresh: boolean,
+  repetir: () => Promise<Preenchimento>
+): Promise<Preenchimento> {
+  const token = await obterToken();
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${configuracao.apiUrl}${caminho}`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: formulario
+    });
+  } catch {
+    throw new ErroApi("Não foi possível enviar os arquivos do preenchimento.", 0);
+  }
+  if (resposta.status === 401 && !repetirAposRefresh) {
+    const renovado = await renovarToken();
+    if (renovado) return repetir();
+  }
+  if (!resposta.ok) throw await criarErro(resposta);
+  return resposta.json() as Promise<Preenchimento>;
+}
 
 export async function enviarDocumento(
   arquivo: File,
