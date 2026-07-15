@@ -13,6 +13,7 @@ import {
   FilePlus2,
   FileText,
   Loader2,
+  MessageSquareText,
   Plus,
   RefreshCw,
   ShieldCheck,
@@ -92,6 +93,7 @@ export default function PaginaPreenchimentos() {
   const [tipos, setTipos] = useState<TipoPreenchimento[]>([]);
   const [tipoId, setTipoId] = useState("");
   const [arquivoBase, setArquivoBase] = useState<File | null>(null);
+  const [instrucoesNegociacao, setInstrucoesNegociacao] = useState("");
   const [fontes, setFontes] = useState<Record<string, File[]>>({});
   const [preenchimento, setPreenchimento] = useState<Preenchimento | null>(null);
   const [historico, setHistorico] = useState<Preenchimento[]>([]);
@@ -169,6 +171,7 @@ export default function PaginaPreenchimentos() {
       const criado = await criarPreenchimento(
         tipo.id,
         arquivoBase,
+        instrucoesNegociacao,
         fontesNovas
       );
       setPreenchimento(criado);
@@ -282,6 +285,7 @@ export default function PaginaPreenchimentos() {
   function novo() {
     setPreenchimento(null);
     setArquivoBase(null);
+    setInstrucoesNegociacao("");
     setFontes({});
     setSelecionados(new Set());
     setValoresEditados({});
@@ -302,8 +306,8 @@ export default function PaginaPreenchimentos() {
       <header className="cabecalho-pagina cabecalho-preenchimento">
         <div>
           <p className="rotulo">Preenchimento documental</p>
-          <h1>Da minuta às lacunas comprovadas.</h1>
-          <p>O texto existente fica intacto. Cada inclusão precisa apontar para um documento e um trecho.</p>
+          <h1>Dos documentos à escritura pronta.</h1>
+          <p>Conte a negociação, envie a minuta e os documentos. A IA monta apenas o que tiver origem e deixa cada inclusão pronta para sua revisão.</p>
         </div>
         <span className="selo-sem-inferencia"><ShieldCheck size={16} /> Sem inferências</span>
       </header>
@@ -320,6 +324,8 @@ export default function PaginaPreenchimentos() {
               tipo={tipo}
               arquivoBase={arquivoBase}
               aoMudarBase={setArquivoBase}
+              instrucoesNegociacao={instrucoesNegociacao}
+              aoMudarInstrucoes={setInstrucoesNegociacao}
               fontes={fontes}
               aoMudarCategoria={atualizarCategoria}
               enviando={enviando}
@@ -372,6 +378,8 @@ function ConfiguracaoPreenchimento({
   tipo,
   arquivoBase,
   aoMudarBase,
+  instrucoesNegociacao,
+  aoMudarInstrucoes,
   fontes,
   aoMudarCategoria,
   enviando,
@@ -383,6 +391,8 @@ function ConfiguracaoPreenchimento({
   tipo?: TipoPreenchimento;
   arquivoBase: File | null;
   aoMudarBase(arquivo: File | null): void;
+  instrucoesNegociacao: string;
+  aoMudarInstrucoes(valor: string): void;
   fontes: Record<string, File[]>;
   aoMudarCategoria(categoria: string, arquivos: File[]): void;
   enviando: boolean;
@@ -402,21 +412,37 @@ function ConfiguracaoPreenchimento({
       </section>
 
       <section className="etapa-preenchimento">
-        <header><span>02</span><div><p className="rotulo">Arquivo que volta pronto</p><h2>Envie a minuta em DOCX</h2></div></header>
+        <header><span>02</span><div><p className="rotulo">Informações da negociação</p><h2>Conte quem participa e como será o negócio</h2><p>Use nomes completos para indicar vendedores, compradores, preço, pagamento e condições. Não repita dados pessoais que já estão nos documentos.</p></div></header>
+        <label className="narrativa-negociacao">
+          <span><MessageSquareText size={18} /> Declaração do caso <small>opcional</small></span>
+          <textarea
+            value={instrucoesNegociacao}
+            onChange={(evento) => aoMudarInstrucoes(evento.target.value)}
+            placeholder="Ex.: João da Silva e Maria da Silva são casados e vendedores. Ana Souza e Carlos Souza são os compradores. O preço é de R$ 500.000,00, pago por transferência na assinatura."
+            maxLength={8000}
+            rows={5}
+          />
+          <small>{instrucoesNegociacao.length}/8.000 caracteres · a IA tratará este texto como fatos declarados, nunca como autorização para inferir dados</small>
+        </label>
+      </section>
+
+      <section className="etapa-preenchimento">
+        <header><span>03</span><div><p className="rotulo">Arquivo que volta pronto</p><h2>Envie a minuta em DOCX</h2></div></header>
         <label className={`upload-minuta ${arquivoBase ? "upload-minuta--pronta" : ""}`}>
           <input type="file" accept=".docx" hidden onChange={(evento) => aoMudarBase(evento.target.files?.[0] || null)} />
           {arquivoBase ? <><FileCheck2 size={28} /><span><strong>{arquivoBase.name}</strong><small>{formatarTamanho(arquivoBase.size)} · o original não será alterado</small></span><button type="button" onClick={(evento) => { evento.preventDefault(); aoMudarBase(null); }} aria-label="Remover minuta"><X size={16} /></button></> : <><UploadCloud size={29} /><span><strong>Solte ou selecione a minuta</strong><small>DOCX com conteúdo pronto, parcial ou apenas marcadores</small></span></>}
         </label>
+        <p className="dica-marcadores"><Sparkles size={15} /> Para a IA redigir trechos inteiros, a minuta pode usar marcadores como <code>[PREENCHER:QUALIFICACAO_VENDEDORES]</code> e <code>[PREENCHER:PRECO_E_PAGAMENTO]</code>. Esses blocos sempre exigem revisão.</p>
       </section>
 
       {tipo && <section className="etapa-preenchimento">
-        <header><span>03</span><div><p className="rotulo">Fontes opcionais</p><h2>Adicione o que puder comprovar as lacunas</h2><p>Você pode começar sem nenhuma fonte e voltar quando receber os documentos faltantes.</p></div></header>
+        <header><span>04</span><div><p className="rotulo">Documentos do caso</p><h2>Envie tudo junto ou organize por tipo</h2><p>Você pode usar a primeira área para todos os arquivos. As categorias abaixo continuam disponíveis quando quiser organizar as fontes.</p></div></header>
         <GradeFontes tipo={tipo} fontes={fontes} aoMudar={aoMudarCategoria} />
       </section>}
 
       <footer className="acoes-inicio-preenchimento">
-        <span><ShieldCheck size={16} /> Nada será preenchido apenas porque “parece correto”.</span>
-        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!arquivoBase || enviando}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : <><Sparkles size={16} /> Mapear lacunas</>}</button>
+        <span><ShieldCheck size={16} /> Papéis declarados orientam a montagem; dados pessoais continuam exigindo fonte.</span>
+        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!arquivoBase || enviando}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : <><Sparkles size={16} /> Analisar e montar</>}</button>
       </footer>
     </>
   );
@@ -427,8 +453,13 @@ function GradeFontes({ tipo, fontes, aoMudar }: { tipo: TipoPreenchimento; fonte
 }
 
 function SeletorFonte({ categoria, arquivos, aoMudar }: { categoria: CategoriaFontePreenchimento; arquivos: File[]; aoMudar(arquivos: File[]): void }) {
+  const classes = [
+    "fonte-upload",
+    categoria.id === "documentos_caso" ? "fonte-upload--geral" : "",
+    arquivos.length ? "fonte-upload--com-arquivo" : ""
+  ].filter(Boolean).join(" ");
   return (
-    <article className={arquivos.length ? "fonte-upload fonte-upload--com-arquivo" : "fonte-upload"}>
+    <article className={classes}>
       <label>
         <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple hidden onChange={(evento) => aoMudar([...arquivos, ...Array.from(evento.target.files || [])])} />
         <span><FilePlus2 size={18} /></span><strong>{categoria.nome}</strong><p>{categoria.descricao}</p><small>{arquivos.length ? `${arquivos.length} arquivo${arquivos.length > 1 ? "s" : ""}` : "Opcional"}</small>
@@ -439,7 +470,7 @@ function SeletorFonte({ categoria, arquivos, aoMudar }: { categoria: CategoriaFo
 }
 
 function Processando({ preenchimento }: { preenchimento: Preenchimento }) {
-  return <section className="estado-preenchimento"><span className="orbe-preenchimento"><Loader2 size={30} className="girando" /></span><p className="rotulo">{preenchimento.status === "pendente" ? "Na fila segura" : "Análise documental"}</p><h2>{preenchimento.status === "pendente" ? "Preparando a minuta…" : "Comparando cada lacuna com as fontes…"}</h2><p>Texto já preenchido não entra na lista de alterações. A página atualiza sozinha.</p><div className="trilha-processamento"><span className="feito"><Check size={13} /> Minuta preservada</span><span className={preenchimento.status === "processando" ? "ativo" : ""}><RefreshCw size={13} /> Evidências</span><span><FileCheck2 size={13} /> DOCX</span></div></section>;
+  return <section className="estado-preenchimento"><span className="orbe-preenchimento"><Loader2 size={30} className="girando" /></span><p className="rotulo">{preenchimento.status === "pendente" ? "Na fila segura" : "Montagem documental"}</p><h2>{preenchimento.status === "pendente" ? "Preparando a minuta…" : "Atribuindo papéis e comparando cada dado com as fontes…"}</h2><p>A declaração orienta a estrutura do negócio. Cada dado incluído continua ligado à sua origem. A página atualiza sozinha.</p><div className="trilha-processamento"><span className="feito"><Check size={13} /> Minuta preservada</span><span className={preenchimento.status === "processando" ? "ativo" : ""}><RefreshCw size={13} /> Evidências</span><span><FileCheck2 size={13} /> DOCX</span></div></section>;
 }
 
 function EstadoErro({ preenchimento, aoNovo }: { preenchimento: Preenchimento; aoNovo(): void }) {
@@ -452,11 +483,16 @@ function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, f
   const camposComValor = resultado.campos.filter((campo) => valorAtual(campo).trim());
   const camposSemValor = resultado.campos.filter((campo) => !valorAtual(campo).trim());
   const idsTodosCampos = resultado.campos.map((campo) => campo.id);
+  const blocosCompostosNaoSelecionados = camposComValor.filter(
+    (campo) => campo.modo_preenchimento === "composto" && !selecionados.has(campo.id)
+  );
   const todosComValorSelecionados = camposComValor.length > 0 && camposComValor.every((campo) => selecionados.has(campo.id));
   const documentoCompleto = resultado.campos.every((campo) => valorAtual(campo).trim() && selecionados.has(campo.id));
   const alertasHumanizados = resultado.alertas.map((alerta) => humanizarAlerta(alerta, resultado.campos));
   const mensagemGeracao = camposSemValor.length
     ? `Faltam valores em ${camposSemValor.length} lacuna${camposSemValor.length === 1 ? "" : "s"}. Preencha os campos ou gere somente o que já selecionou.`
+    : blocosCompostosNaoSelecionados.length
+      ? `Revise e selecione ${blocosCompostosNaoSelecionados.length} bloco${blocosCompostosNaoSelecionados.length === 1 ? "" : "s"} redigido${blocosCompostosNaoSelecionados.length === 1 ? "" : "s"} pela IA antes de gerar a versão completa.`
     : documentoCompleto
       ? `Tudo pronto: ${resultado.campos.length} campo${resultado.campos.length === 1 ? "" : "s"} serão aplicados ao DOCX.`
       : `Os ${resultado.campos.length} valores estão prontos. O botão principal selecionará todos e gerará o DOCX.`;
@@ -466,6 +502,7 @@ function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, f
         <div><p className="rotulo">Mapa da minuta</p><h2>{resultado.total_pendentes ? "Há dados que ainda precisam de fonte." : "Todas as lacunas têm evidência."}</h2><p>{preenchimento.nome_minuta}</p></div>
         <div className="numeros-preenchimento"><span><strong>{resultado.total_campos}</strong><small>lacunas</small></span><span className="positivo"><strong>{resultado.total_encontrados}</strong><small>com fonte</small></span><span className={resultado.total_pendentes ? "pendente" : "positivo"}><strong>{resultado.total_pendentes}</strong><small>pendentes</small></span></div>
       </section>
+      {preenchimento.instrucoes_negociacao?.trim() && <section className="declaracao-caso"><MessageSquareText size={17} /><div><strong>Negociação informada</strong><p>{preenchimento.instrucoes_negociacao}</p></div></section>}
       {alertasHumanizados.length > 0 && <div className="alertas-preenchimento"><strong><AlertCircle size={15} /> Pontos para conferir</strong>{alertasHumanizados.map((alerta, indice) => <p key={`${indice}-${alerta}`}>{alerta}</p>)}</div>}
       <section className="campos-preenchimento">
         <header><div><p className="rotulo">Conferência antes de escrever</p><h2>Revise, edite e escolha o que será escrito</h2></div><div className="acoes-selecao-campos"><small>{selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}</small><button type="button" onClick={() => aoDefinirSelecionados(todosComValorSelecionados ? [] : camposComValor.map((campo) => campo.id))} disabled={!camposComValor.length}>{todosComValorSelecionados ? "Limpar seleção" : `Selecionar ${camposComValor.length} com valor`}</button></div></header>
@@ -474,7 +511,7 @@ function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, f
       {resultado.total_pendentes > 0 && tipo && <section className="fontes-complementares"><header><span><Plus size={17} /></span><div><p className="rotulo">Continuar depois</p><h2>Recebeu um documento que faltava?</h2><p>Adicione novas fontes; este caso já está salvo e será analisado novamente.</p></div></header><GradeFontes tipo={tipo} fontes={fontes} aoMudar={aoMudarCategoria} /><button className="botao botao--secundario" type="button" onClick={aoAdicionar} disabled={!fontesNovas.length || enviando}>{enviando ? <><Loader2 size={15} className="girando" /> Reanalisando…</> : <><RefreshCw size={15} /> Adicionar e reanalisar</>}</button></section>}
       <footer className="acoes-geracao">
         <button className="botao botao--secundario" type="button" onClick={aoNovo}>Novo caso</button>
-        <div><p>{mensagemGeracao}</p>{selecionados.size > 0 && !documentoCompleto && <button className="botao botao--secundario" type="button" onClick={() => aoGerar(true)} disabled={gerando}>{gerando ? <Loader2 className="girando" size={15} /> : <Download size={15} />} Gerar só {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}</button>}<button className="botao botao--primario" type="button" onClick={() => { aoDefinirSelecionados(idsTodosCampos); aoGerar(false, idsTodosCampos); }} disabled={gerando || camposSemValor.length > 0}>{gerando ? <><Loader2 className="girando" size={15} /> Gerando…</> : camposSemValor.length ? <><AlertCircle size={15} /> Falta{camposSemValor.length === 1 ? "" : "m"} {camposSemValor.length} valor{camposSemValor.length === 1 ? "" : "es"}</> : documentoCompleto ? <><FileCheck2 size={15} /> Gerar documento completo</> : <><FileCheck2 size={15} /> Selecionar {resultado.campos.length} e gerar</>}</button></div>
+        <div><p>{mensagemGeracao}</p>{selecionados.size > 0 && !documentoCompleto && <button className="botao botao--secundario" type="button" onClick={() => aoGerar(true)} disabled={gerando}>{gerando ? <Loader2 className="girando" size={15} /> : <Download size={15} />} Gerar só {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}</button>}<button className="botao botao--primario" type="button" onClick={() => { aoDefinirSelecionados(idsTodosCampos); aoGerar(false, idsTodosCampos); }} disabled={gerando || camposSemValor.length > 0 || blocosCompostosNaoSelecionados.length > 0}>{gerando ? <><Loader2 className="girando" size={15} /> Gerando…</> : camposSemValor.length ? <><AlertCircle size={15} /> Falta{camposSemValor.length === 1 ? "" : "m"} {camposSemValor.length} valor{camposSemValor.length === 1 ? "" : "es"}</> : blocosCompostosNaoSelecionados.length ? <><AlertCircle size={15} /> Revise {blocosCompostosNaoSelecionados.length} bloco{blocosCompostosNaoSelecionados.length === 1 ? "" : "s"}</> : documentoCompleto ? <><FileCheck2 size={15} /> Gerar documento completo</> : <><FileCheck2 size={15} /> Selecionar {resultado.campos.length} e gerar</>}</button></div>
       </footer>
     </>
   );
@@ -483,9 +520,37 @@ function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, f
 function CampoMapeado({ numero, campo, valor, editado, selecionado, aoAlternar, aoMudarValor }: { numero: number; campo: CampoPreenchimento; valor: string; editado: boolean; selecionado: boolean; aoAlternar(): void; aoMudarValor(valor: string): void }) {
   const encontrado = campo.status === "encontrado";
   const ajusteManual = editado || Boolean(campo.editado_pelo_usuario);
+  const composto = campo.modo_preenchimento === "composto";
   const temValor = Boolean(valor.trim());
-  return <article className={`campo-mapeado campo-mapeado--${campo.status} ${selecionado ? "campo-mapeado--selecionado" : ""}`}>
+  const evidencias = campo.evidencias?.length
+    ? campo.evidencias
+    : campo.fonte_id && campo.fonte_nome && campo.categoria_fonte && campo.trecho
+      ? [{
+          fonte_id: campo.fonte_id,
+          fonte_nome: campo.fonte_nome,
+          categoria_fonte: campo.categoria_fonte,
+          pagina: campo.pagina,
+          trecho: campo.trecho
+        }]
+      : [];
+  const etiqueta = ajusteManual
+    ? "Ajuste manual"
+    : composto
+      ? "Bloco composto"
+      : campo.status === "encontrado"
+        ? campo.autoaplicavel ? "Evidência textual" : "Revisão visual"
+        : campo.status === "ambiguo" ? "Ambíguo" : "Sem fonte";
+
+  return <article className={`campo-mapeado campo-mapeado--${campo.status} ${selecionado ? "campo-mapeado--selecionado" : ""} ${composto ? "campo-mapeado--composto" : ""}`}>
     <button type="button" className="selecao-campo" onClick={aoAlternar} disabled={!temValor} aria-label={temValor ? `${selecionado ? "Remover" : "Incluir"} ${campo.rotulo}` : `Preencha ${campo.rotulo} para incluir`}>{selecionado ? <Check size={14} /> : temValor ? <span /> : <AlertCircle size={14} />}</button>
-    <div className="campo-mapeado__conteudo"><header><span className={`etiqueta-campo ${ajusteManual ? "etiqueta-campo--manual" : `etiqueta-campo--${campo.status}`}`}>{ajusteManual ? "Ajuste manual" : campo.status === "encontrado" ? campo.autoaplicavel ? "Evidência textual" : "Revisão visual" : campo.status === "ambiguo" ? "Ambíguo" : "Sem fonte"}</span><span className="numero-lacuna">Lacuna {String(numero).padStart(2, "0")}</span><code>{campo.marcador}</code></header><h3>{campo.rotulo}</h3><label className="edicao-valor-campo"><span>Valor que será escrito</span><textarea value={valor} onChange={(evento) => aoMudarValor(evento.target.value)} placeholder="Digite o valor manualmente" maxLength={1000} rows={valor.length > 90 ? 3 : 1} /></label>{editado && campo.valor && campo.valor !== valor && <p className="valor-original-campo">Valor salvo anteriormente: {campo.valor}</p>}{campo.valor_original && <p className="valor-original-campo">Sugestão documental original: {campo.valor_original}</p>}{encontrado && campo.fonte_nome ? <><p className="origem-preenchimento"><ShieldCheck size={13} />{campo.fonte_nome}{campo.pagina ? ` · página ${campo.pagina}` : ""} · {Math.round(campo.confianca * 100)}%</p>{campo.trecho && <blockquote>“{campo.trecho}”</blockquote>}</> : <><p className="justificativa-campo">{campo.justificativa}</p><p className="contexto-campo">{campo.contexto}</p></>}</div>
+    <div className="campo-mapeado__conteudo">
+      <header><span className={`etiqueta-campo ${ajusteManual ? "etiqueta-campo--manual" : composto ? "etiqueta-campo--composto" : `etiqueta-campo--${campo.status}`}`}>{etiqueta}</span><span className="numero-lacuna">Lacuna {String(numero).padStart(2, "0")}</span><code>{campo.marcador}</code></header>
+      <h3>{campo.rotulo}</h3>
+      {composto && <p className="aviso-bloco-composto"><AlertCircle size={13} /> Texto redigido pela IA com as evidências abaixo. Leia o bloco inteiro e marque-o somente após conferir.</p>}
+      <label className="edicao-valor-campo"><span>Valor que será escrito</span><textarea value={valor} onChange={(evento) => aoMudarValor(evento.target.value)} placeholder="Digite o valor manualmente" maxLength={8000} rows={composto || valor.length > 90 ? 4 : 1} /></label>
+      {editado && campo.valor && campo.valor !== valor && <p className="valor-original-campo">Valor salvo anteriormente: {campo.valor}</p>}
+      {campo.valor_original && <p className="valor-original-campo">Sugestão documental original: {campo.valor_original}</p>}
+      {encontrado && evidencias.length ? <div className="lista-evidencias-campo">{evidencias.map((evidencia, indice) => <div key={`${evidencia.fonte_id}-${indice}`}><p className="origem-preenchimento"><ShieldCheck size={13} />{evidencia.fonte_nome}{evidencia.pagina ? ` · página ${evidencia.pagina}` : ""}{indice === 0 ? ` · ${Math.round(campo.confianca * 100)}%` : ""}</p><blockquote>“{evidencia.trecho}”</blockquote></div>)}</div> : <><p className="justificativa-campo">{campo.justificativa}</p><p className="contexto-campo">{campo.contexto}</p></>}
+    </div>
   </article>;
 }

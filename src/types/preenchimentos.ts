@@ -9,6 +9,7 @@ export type StatusPreenchimento =
   | "erro_interno";
 
 export type StatusCampoPreenchimento = "encontrado" | "ausente" | "ambiguo";
+export type ModoPreenchimento = "literal" | "composto";
 
 export interface CategoriaFontePreenchimento {
   id: string;
@@ -40,6 +41,14 @@ export interface LocalizadorCampoDocx {
   marcador: string;
 }
 
+export interface EvidenciaCampoPreenchimento {
+  fonte_id: string;
+  fonte_nome: string;
+  categoria_fonte: string;
+  pagina: number | null;
+  trecho: string;
+}
+
 export interface CampoPreenchimento {
   id: string;
   rotulo: string;
@@ -49,6 +58,8 @@ export interface CampoPreenchimento {
   valor: string | null;
   valor_original?: string | null;
   editado_pelo_usuario?: boolean;
+  modo_preenchimento?: ModoPreenchimento;
+  evidencias?: EvidenciaCampoPreenchimento[];
   fonte_id: string | null;
   fonte_nome: string | null;
   categoria_fonte: string | null;
@@ -88,6 +99,7 @@ export interface Preenchimento {
   nome_minuta: string;
   hash_minuta: string;
   tamanho_minuta_bytes: number;
+  instrucoes_negociacao?: string;
   status: StatusPreenchimento;
   resultado: ResultadoPreenchimento | Record<string, never>;
   nome_resultado: string | null;

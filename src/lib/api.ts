@@ -190,12 +190,14 @@ export const api = {
 export async function criarPreenchimento(
   tipoDocumento: string,
   arquivoBase: File,
+  instrucoesNegociacao: string,
   fontes: FonteSelecionada[],
   repetirAposRefresh = false
 ): Promise<Preenchimento> {
   const formulario = new FormData();
   formulario.append("tipo_documento", tipoDocumento);
   formulario.append("arquivo_base", arquivoBase);
+  formulario.append("instrucoes_negociacao", instrucoesNegociacao);
   fontes.forEach((fonte) => {
     formulario.append("categorias_fontes", fonte.categoria);
     formulario.append("arquivos_fontes", fonte.arquivo);
@@ -204,7 +206,14 @@ export async function criarPreenchimento(
     "/api/v1/preenchimentos",
     formulario,
     repetirAposRefresh,
-    () => criarPreenchimento(tipoDocumento, arquivoBase, fontes, true)
+    () =>
+      criarPreenchimento(
+        tipoDocumento,
+        arquivoBase,
+        instrucoesNegociacao,
+        fontes,
+        true
+      )
   );
 }
 
