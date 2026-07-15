@@ -24,7 +24,7 @@ Fluxos implementados:
 - bancada inicial com upload por clique ou arrastar/soltar;
 - progresso e cancelamento do upload;
 - histórico com pesquisa por arquivo ou qualquer dado extraído, filtros e exclusão permanente;
-- ficha resumida de alta densidade com cópia individual ou completa, além da conferência detalhada;
+- ficha resumida de alta densidade com cópia individual, com títulos ou somente valores, além da conferência detalhada;
 - acompanhamento moderado de processamento (3 s em primeiro plano, 12 s oculto);
 - visualizador de PDF/imagem e navegação por páginas;
 - dados extraídos ao lado do documento;

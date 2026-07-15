@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clipboard, Copy } from "lucide-react";
+import { Check, Clipboard, Copy, List } from "lucide-react";
 import { useState } from "react";
 
 import { gruposApresentacao } from "@/components/documentos/grupos-extracao";
@@ -30,14 +30,26 @@ export function ResumoExtracao({
           <strong>Visão essencial</strong>
           <span>{total} {total === 1 ? "dado pronto" : "dados prontos"} para copiar</span>
         </div>
-        <button
-          className={copiado === "todos" ? "copiado" : ""}
-          onClick={() => copiar(montarTextoCompleto(resultado), "todos")}
-          disabled={!total && !resultado.resumo}
-        >
-          {copiado === "todos" ? <Check size={15} /> : <Copy size={15} />}
-          {copiado === "todos" ? "Copiado" : "Copiar tudo"}
-        </button>
+        <div className="resumo-rapido__acoes-copia">
+          <button
+            className={copiado === "rotulos" ? "copiado" : ""}
+            onClick={() => copiar(montarTextoComRotulos(resultado), "rotulos")}
+            disabled={!total}
+            title="Copiar cada dado com seu título"
+          >
+            {copiado === "rotulos" ? <Check size={15} /> : <Copy size={15} />}
+            {copiado === "rotulos" ? "Copiado" : "Com títulos"}
+          </button>
+          <button
+            className={copiado === "valores" ? "copiado" : ""}
+            onClick={() => copiar(montarTextoSomenteValores(resultado), "valores")}
+            disabled={!total}
+            title="Copiar somente os valores, um por linha"
+          >
+            {copiado === "valores" ? <Check size={15} /> : <List size={15} />}
+            {copiado === "valores" ? "Copiado" : "Só dados"}
+          </button>
+        </div>
       </header>
 
       {resultado.resumo && (
@@ -97,31 +109,39 @@ export function ResumoExtracao({
   );
 }
 
-function montarTextoCompleto(resultado: ResultadoExtracao) {
-  const linhas: string[] = [];
-  if (resultado.tipo_documento) linhas.push(`Tipo de documento: ${resultado.tipo_documento}`);
-  if (resultado.resumo) linhas.push(`Resumo: ${resultado.resumo}`);
+function montarTextoComRotulos(resultado: ResultadoExtracao) {
+  return listarItensCopiaveis(resultado)
+    .map((item) => `${item.tipo}: ${item.valor}`)
+    .join("\n");
+}
 
-  for (const grupo of gruposApresentacao) {
-    const itens = resultado[grupo.chave].filter((item) => item.valor);
-    if (!itens.length) continue;
-    linhas.push("", grupo.rotulo.toUpperCase());
-    for (const item of itens) {
-      const papel = item.papel ? ` · ${item.papel}` : "";
-      const pagina = item.pagina ? ` [página ${item.pagina}]` : "";
-      linhas.push(`${item.tipo}${papel}: ${item.valor}${pagina}`);
-    }
-  }
+function montarTextoSomenteValores(resultado: ResultadoExtracao) {
+  return listarItensCopiaveis(resultado)
+    .map((item) => abreviarValorQuandoNecessario(item.tipo, item.valor))
+    .join("\n");
+}
 
-  if (resultado.alertas.length) {
-    linhas.push("", "ALERTAS", ...resultado.alertas.map((alerta) => `- ${alerta}`));
-  }
-  if (resultado.campos_nao_encontrados.length) {
-    linhas.push(
-      "",
-      "NÃO ENCONTRADOS",
-      ...resultado.campos_nao_encontrados.map((campo) => `- ${campo}`)
-    );
-  }
-  return linhas.join("\n").trim();
+function listarItensCopiaveis(resultado: ResultadoExtracao) {
+  return gruposApresentacao.flatMap((grupo) =>
+    resultado[grupo.chave]
+      .filter((item): item is typeof item & { valor: string } => Boolean(item.valor))
+      .map((item) => ({ tipo: item.tipo, valor: item.valor }))
+  );
+}
+
+function abreviarValorQuandoNecessario(tipo: string, valor: string) {
+  const campo = normalizar(tipo);
+  if (!campo.includes("sexo") && !campo.includes("genero")) return valor;
+
+  const sexo = normalizar(valor);
+  if (sexo.startsWith("feminin")) return "F";
+  if (sexo.startsWith("masculin")) return "M";
+  return valor;
+}
+
+function normalizar(valor: string) {
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR");
 }
