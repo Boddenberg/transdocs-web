@@ -1,17 +1,15 @@
 "use client";
 
-import { Check, Clipboard, Copy, ExternalLink } from "lucide-react";
+import { Check, Clipboard, Copy } from "lucide-react";
 import { useState } from "react";
 
 import { gruposApresentacao } from "@/components/documentos/grupos-extracao";
 import type { ResultadoExtracao } from "@/types/documentos";
 
 export function ResumoExtracao({
-  resultado,
-  aoAbrirPagina
+  resultado
 }: {
   resultado: ResultadoExtracao;
-  aoAbrirPagina(pagina: number): void;
 }) {
   const [copiado, setCopiado] = useState<string | null>(null);
   const total = gruposApresentacao.reduce(
@@ -44,7 +42,7 @@ export function ResumoExtracao({
 
       {resultado.resumo && (
         <section className="resumo-sintese">
-          <span>Em poucas palavras</span>
+          <strong>Síntese</strong>
           <p>{resultado.resumo}</p>
         </section>
       )}
@@ -67,24 +65,18 @@ export function ResumoExtracao({
                   const identificador = `${grupo.chave}-${indice}`;
                   return (
                     <article className="resumo-item" key={identificador}>
-                      <div className="resumo-item__texto">
-                        <span>{item.tipo}{item.papel ? ` · ${item.papel}` : ""}</span>
-                        <strong>{item.valor}</strong>
-                      </div>
-                      <div className="resumo-item__acoes">
-                        {item.pagina && (
-                          <button onClick={() => aoAbrirPagina(item.pagina!)} aria-label={`Abrir página ${item.pagina}`}>
-                            <ExternalLink size={13} /> p. {item.pagina}
-                          </button>
-                        )}
-                        <button
-                          className={copiado === identificador ? "copiado" : ""}
-                          onClick={() => copiar(item.valor!, identificador)}
-                          aria-label={`Copiar ${item.tipo}`}
-                        >
-                          {copiado === identificador ? <Check size={15} /> : <Clipboard size={15} />}
-                        </button>
-                      </div>
+                      <span className="resumo-item__rotulo">
+                        {item.tipo}{item.papel ? ` · ${item.papel}` : ""}
+                      </span>
+                      <strong title={item.valor || undefined}>{item.valor}</strong>
+                      <button
+                        className={copiado === identificador ? "copiado" : ""}
+                        onClick={() => copiar(item.valor!, identificador)}
+                        aria-label={`Copiar ${item.tipo}`}
+                        title={`Copiar ${item.tipo}`}
+                      >
+                        {copiado === identificador ? <Check size={14} /> : <Clipboard size={14} />}
+                      </button>
                     </article>
                   );
                 })}

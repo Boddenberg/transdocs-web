@@ -29,7 +29,7 @@ export function PainelExtracao({
         <span className="contador-achados">{total} achados</span>
       </header>
       <nav className="abas-extracao"><button className={aba === "resumo" ? "ativo" : ""} onClick={() => setAba("resumo")}><Rows3 size={15} /> Resumo</button><button className={aba === "detalhado" ? "ativo" : ""} onClick={() => setAba("detalhado")}><SearchCheck size={15} /> Detalhado</button><button className={aba === "alertas" ? "ativo" : ""} onClick={() => setAba("alertas")}><AlertTriangle size={15} /> Alertas {revisoes > 0 && <span>{revisoes}</span>}</button></nav>
-      {aba === "resumo" ? <ResumoExtracao resultado={resultado} aoAbrirPagina={aoAbrirPagina} /> : aba === "detalhado" ? <div className="painel-extracao__conteudo">
+      {aba === "resumo" ? <ResumoExtracao resultado={resultado} /> : aba === "detalhado" ? <div className="painel-extracao__conteudo">
         {resultado.resumo && <div className="resumo-extracao"><span>Resumo factual</span><p>{resultado.resumo}</p></div>}
         <label className="filtro-revisao"><input type="checkbox" checked={somenteRevisao} onChange={(e) => setSomenteRevisao(e.target.checked)} /><span /> Mostrar apenas o que precisa de revisão</label>
         {gruposApresentacao.map((grupo) => {
