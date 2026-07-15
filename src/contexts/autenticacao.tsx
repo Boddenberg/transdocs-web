@@ -12,7 +12,11 @@ interface AutenticacaoContexto {
   carregando: boolean;
   configurado: boolean;
   entrar(email: string, senha: string): Promise<void>;
-  cadastrar(nome: string, email: string, senha: string): Promise<void>;
+  cadastrar(
+    nome: string,
+    email: string,
+    senha: string
+  ): Promise<{ confirmacaoEmailNecessaria: boolean }>;
   recuperar(email: string): Promise<void>;
   atualizarSenha(senha: string): Promise<void>;
   atualizarPerfil(nome: string): Promise<void>;
@@ -54,12 +58,13 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
         if (error) throw new Error(traduzirErroAuth(error.message));
       },
       async cadastrar(nome, email, senha) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password: senha,
           options: { data: { nome } }
         });
         if (error) throw new Error(traduzirErroAuth(error.message));
+        return { confirmacaoEmailNecessaria: !data.session };
       },
       async recuperar(email) {
         const destino = `${window.location.origin}/auth/nova-senha`;
@@ -95,8 +100,10 @@ export function useAutenticacao() {
 
 function traduzirErroAuth(mensagem: string) {
   if (/invalid login/i.test(mensagem)) return "E-mail ou senha incorretos.";
+  if (/email not confirmed/i.test(mensagem)) return "Confirme seu e-mail antes de entrar.";
   if (/already registered/i.test(mensagem)) return "Este e-mail já está cadastrado.";
   if (/password/i.test(mensagem)) return "Use uma senha com pelo menos 8 caracteres.";
   if (/rate limit/i.test(mensagem)) return "Muitas tentativas. Aguarde um pouco.";
+  if (/invalid api key/i.test(mensagem)) return "A configuração de autenticação está inválida.";
   return "Não foi possível autenticar agora.";
 }
