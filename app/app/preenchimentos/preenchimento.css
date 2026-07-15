@@ -19,6 +19,48 @@
 .seletor-tipo-preenchimento strong { color: #293f36; font-size: .83rem; }
 .seletor-tipo-preenchimento em { color: #6c8077; font-size: .66rem; font-style: normal; line-height: 1.4; }
 .seletor-tipo-preenchimento select { max-width: 210px; padding: 9px 30px 9px 10px; border: 1px solid var(--linha); border-radius: 9px; outline: 0; color: #536a60; background: #fff; font-size: .68rem; }
+.modos-criacao { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.modos-criacao > button { position: relative; min-height: 132px; padding: 16px 42px 16px 16px; display: grid; grid-template-columns: 34px minmax(0,1fr); grid-template-rows: auto 1fr; column-gap: 11px; border: 1px solid var(--linha); border-radius: 13px; color: #61766c; background: #fbfdfc; font-family: inherit; text-align: left; }
+.modos-criacao > button > span { width: 34px; height: 34px; grid-row: 1 / 3; display: grid; place-items: center; border-radius: 10px; color: #557b69; background: #edf4f0; }
+.modos-criacao > button strong { align-self: end; color: #354a41; font-size: .7rem; }
+.modos-criacao > button strong small { margin-left: 5px; padding: 3px 5px; border-radius: 999px; color: #2f765a; background: #e7f3ec; font-size: .47rem; text-transform: uppercase; letter-spacing: .04em; }
+.modos-criacao > button p { margin: 5px 0 0; color: #71847b; font-size: .6rem; line-height: 1.45; }
+.modos-criacao > button > svg { position: absolute; top: 15px; right: 15px; color: #2f8064; }
+.modos-criacao > button:hover { border-color: rgba(47,128,100,.32); background: #fff; }
+.modos-criacao > button.ativo { border-color: rgba(47,128,100,.48); background: #f3faf6; box-shadow: 0 0 0 2px rgba(47,128,100,.06); }
+.biblioteca-modelos, .minuta-propria { margin-top: 14px; }
+.biblioteca-modelos { padding: 14px; border: 1px solid rgba(47,128,100,.14); border-radius: 14px; background: #f8fbf9; }
+.biblioteca-modelos__cabecalho { padding: 2px 2px 11px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.biblioteca-modelos__cabecalho > div { display: grid; gap: 3px; }
+.biblioteca-modelos__cabecalho strong { color: #3c5148; font-size: .68rem; }
+.biblioteca-modelos__cabecalho small { color: #76887f; font-size: .57rem; }
+.biblioteca-modelos__cabecalho > span { padding: 5px 8px; border-radius: 999px; color: #4f7765; background: #e9f2ed; font-size: .53rem; font-weight: 700; }
+.lista-modelos { display: grid; gap: 7px; }
+.lista-modelos article { position: relative; border: 1px solid var(--linha); border-radius: 11px; background: #fff; overflow: hidden; }
+.lista-modelos article.ativo { border-color: rgba(47,128,100,.45); box-shadow: 0 0 0 2px rgba(47,128,100,.05); }
+.modelo-principal { width: 100%; min-height: 84px; padding: 12px 42px 12px 12px; display: grid; grid-template-columns: 34px minmax(0,1fr) 18px; gap: 10px; align-items: center; border: 0; color: #587066; background: transparent; font-family: inherit; text-align: left; }
+.modelo-principal > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: #3f785f; background: #eaf4ef; }
+.modelo-principal > div { min-width: 0; display: grid; gap: 3px; }
+.modelo-principal strong { color: #344a40; font-size: .68rem; }
+.modelo-principal p { margin: 0; overflow: hidden; color: #71847b; font-size: .56rem; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.modelo-principal small { color: #5d7b6d; font-size: .52rem; }
+.modelo-principal > svg { color: #2f8064; }
+.modelo-principal:hover { background: #fbfdfc; }
+.excluir-modelo { position: absolute; top: 8px; right: 8px; width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid var(--linha); border-radius: 7px; color: #7a8a83; background: #fff; }
+.excluir-modelo:hover { color: #a54b44; border-color: rgba(165,75,68,.25); background: #fff5f3; }
+.novo-modelo { margin-top: 9px; border: 1px dashed rgba(47,128,100,.22); border-radius: 10px; background: #fff; }
+.novo-modelo summary { min-height: 40px; padding: 0 11px; display: flex; align-items: center; gap: 7px; color: #47745f; font-size: .59rem; font-weight: 700; cursor: pointer; list-style: none; }
+.novo-modelo summary::-webkit-details-marker { display: none; }
+.novo-modelo > div { padding: 0 11px 11px; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 8px; align-items: end; }
+.upload-modelo { min-height: 48px; padding: 7px 9px; display: flex; align-items: center; gap: 8px; border: 1px dashed rgba(47,128,100,.28); border-radius: 8px; color: #4e7a66; background: #f7fbf9; cursor: pointer; }
+.upload-modelo.pronto { border-style: solid; }
+.upload-modelo span { min-width: 0; display: grid; gap: 2px; }
+.upload-modelo strong { overflow: hidden; color: #3e554a; font-size: .58rem; text-overflow: ellipsis; white-space: nowrap; }
+.upload-modelo small { overflow: hidden; color: #7b8c84; font-size: .49rem; text-overflow: ellipsis; white-space: nowrap; }
+.nome-modelo { display: grid; gap: 5px; }
+.nome-modelo span { color: #6d8178; font-size: .52rem; font-weight: 700; }
+.nome-modelo input { width: 100%; min-height: 40px; padding: 0 9px; border: 1px solid var(--linha-forte); border-radius: 8px; outline: 0; color: #354a41; background: #fff; font-family: inherit; font-size: .59rem; }
+.novo-modelo .botao { min-height: 40px; white-space: nowrap; }
 .entrada-negociacao { display: grid; gap: 12px; }
 .narrativa-negociacao { display: grid; gap: 9px; }
 .narrativa-negociacao > span { display: flex; align-items: center; gap: 7px; color: #3b6f59; font-size: .67rem; font-weight: 750; }
@@ -170,5 +212,5 @@
 .acoes-geracao .botao { min-height: 41px; }
 .preenchimento-carregando { min-height: 480px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #71857c; font-size: .72rem; }
 @media (max-width: 1060px) { .grade-preenchimento { grid-template-columns: 1fr; }.historico-preenchimentos { position: static; order: -1; }.historico-preenchimentos > button { display: inline-grid; width: min(310px,100%); border: 1px solid var(--linha); border-radius: 11px; }.grade-fontes { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@media (max-width: 760px) { .pagina-preenchimento { width: min(100% - 28px,1240px); }.selo-sem-inferencia { display: none; }.seletor-tipo-preenchimento { grid-template-columns: 40px minmax(0,1fr); }.seletor-tipo-preenchimento select { grid-column: 2; max-width: 100%; }.grade-fontes { grid-template-columns: 1fr; }.fonte-upload > label { min-height: 125px; }.resumo-preenchimento { align-items: flex-start; flex-direction: column; }.numeros-preenchimento { width: 100%; }.numeros-preenchimento > span { flex: 1; }.campos-preenchimento > header { align-items: flex-start; flex-direction: column; gap: 13px; }.acoes-selecao-campos { width: 100%; justify-content: space-between; }.acoes-geracao, .acoes-geracao > div { align-items: stretch; flex-direction: column; }.acoes-geracao p { max-width: none; margin: 0; text-align: left; }.acoes-geracao .botao { width: 100%; }.acoes-inicio-preenchimento { align-items: stretch; flex-direction: column; }.acoes-inicio-preenchimento .botao { width: 100%; }.trilha-processamento { flex-wrap: wrap; justify-content: center; } }
+@media (max-width: 760px) { .pagina-preenchimento { width: min(100% - 28px,1240px); }.selo-sem-inferencia { display: none; }.seletor-tipo-preenchimento { grid-template-columns: 40px minmax(0,1fr); }.seletor-tipo-preenchimento select { grid-column: 2; max-width: 100%; }.modos-criacao { grid-template-columns: 1fr; }.novo-modelo > div { grid-template-columns: 1fr; }.grade-fontes { grid-template-columns: 1fr; }.fonte-upload > label { min-height: 125px; }.resumo-preenchimento { align-items: flex-start; flex-direction: column; }.numeros-preenchimento { width: 100%; }.numeros-preenchimento > span { flex: 1; }.campos-preenchimento > header { align-items: flex-start; flex-direction: column; gap: 13px; }.acoes-selecao-campos { width: 100%; justify-content: space-between; }.acoes-geracao, .acoes-geracao > div { align-items: stretch; flex-direction: column; }.acoes-geracao p { max-width: none; margin: 0; text-align: left; }.acoes-geracao .botao { width: 100%; }.acoes-inicio-preenchimento { align-items: stretch; flex-direction: column; }.acoes-inicio-preenchimento .botao { width: 100%; }.trilha-processamento { flex-wrap: wrap; justify-content: center; } }
 @media (max-width: 520px) { .etapa-preenchimento { padding: 20px 17px; }.campo-mapeado { padding: 18px 15px; }.campo-mapeado__conteudo > header { align-items: flex-start; flex-direction: column; }.numeros-preenchimento { gap: 5px; }.numeros-preenchimento > span { min-width: 0; padding: 9px 5px; }.upload-minuta--pronta { align-items: flex-start; }.historico-preenchimentos { padding: 14px; } }

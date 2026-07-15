@@ -10,6 +10,19 @@ export type StatusPreenchimento =
 
 export type StatusCampoPreenchimento = "encontrado" | "ausente" | "ambiguo";
 export type ModoPreenchimento = "literal" | "composto";
+export type ModoCriacaoPreenchimento = "documento_completo" | "completar_minuta";
+
+export interface ModeloPreenchimento {
+  id: string;
+  nome: string;
+  descricao: string;
+  tipo_documento: string;
+  origem: "sistema" | "usuario";
+  nome_arquivo: string;
+  total_campos: number;
+  total_blocos: number;
+  criado_em: string | null;
+}
 
 export interface CategoriaFontePreenchimento {
   id: string;
@@ -100,6 +113,9 @@ export interface Preenchimento {
   hash_minuta: string;
   tamanho_minuta_bytes: number;
   instrucoes_negociacao?: string;
+  modo_criacao?: ModoCriacaoPreenchimento;
+  modelo_referencia?: string | null;
+  modelo_nome?: string | null;
   status: StatusPreenchimento;
   resultado: ResultadoPreenchimento | Record<string, never>;
   nome_resultado: string | null;

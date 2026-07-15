@@ -30,6 +30,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   adicionarFontesPreenchimento,
   api,
+  criarModeloPreenchimento,
   criarPreenchimento,
   transcreverAudioPreenchimento
 } from "@/lib/api";
@@ -38,6 +39,8 @@ import type {
   CampoPreenchimento,
   CategoriaFontePreenchimento,
   FonteSelecionada,
+  ModeloPreenchimento,
+  ModoCriacaoPreenchimento,
   Preenchimento,
   ResultadoPreenchimento,
   TipoPreenchimento
@@ -97,6 +100,11 @@ function nomeStatus(preenchimento: Preenchimento) {
 export default function PaginaPreenchimentos() {
   const [tipos, setTipos] = useState<TipoPreenchimento[]>([]);
   const [tipoId, setTipoId] = useState("");
+  const [modoCriacao, setModoCriacao] = useState<ModoCriacaoPreenchimento>(
+    "documento_completo"
+  );
+  const [modelos, setModelos] = useState<ModeloPreenchimento[]>([]);
+  const [modeloId, setModeloId] = useState("");
   const [arquivoBase, setArquivoBase] = useState<File | null>(null);
   const [instrucoesNegociacao, setInstrucoesNegociacao] = useState("");
   const [fontes, setFontes] = useState<Record<string, File[]>>({});
@@ -106,6 +114,7 @@ export default function PaginaPreenchimentos() {
   const [valoresEditados, setValoresEditados] = useState<Record<string, string>>({});
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
+  const [salvandoModelo, setSalvandoModelo] = useState(false);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -114,11 +123,19 @@ export default function PaginaPreenchimentos() {
 
   useEffect(() => {
     let ativo = true;
-    Promise.all([api.preenchimentos.tipos(), api.preenchimentos.listar()])
-      .then(async ([catalogo, recentes]) => {
+    Promise.all([
+      api.preenchimentos.tipos(),
+      api.preenchimentos.modelos(),
+      api.preenchimentos.listar()
+    ])
+      .then(async ([catalogo, biblioteca, recentes]) => {
         if (!ativo) return;
         setTipos(catalogo);
         setTipoId(catalogo[0]?.id || "");
+        setModelos(biblioteca);
+        setModeloId(
+          biblioteca.find((item) => item.tipo_documento === catalogo[0]?.id)?.id || ""
+        );
         setHistorico(recentes);
         const ultimo = window.localStorage.getItem(CHAVE_ULTIMO);
         if (ultimo) {
@@ -168,6 +185,59 @@ export default function PaginaPreenchimentos() {
     setFontes((atuais) => ({ ...atuais, [categoria]: arquivos }));
   }
 
+  function mudarTipo(proximoTipo: string) {
+    setTipoId(proximoTipo);
+    setModeloId(
+      modelos.find((modelo) => modelo.tipo_documento === proximoTipo)?.id || ""
+    );
+  }
+
+  function mudarModo(proximoModo: ModoCriacaoPreenchimento) {
+    setModoCriacao(proximoModo);
+    setErro(null);
+    if (proximoModo === "documento_completo") setArquivoBase(null);
+  }
+
+  async function criarModelo(arquivo: File, nome: string) {
+    if (!tipo || salvandoModelo) return;
+    setSalvandoModelo(true);
+    setErro(null);
+    try {
+      const criado = await criarModeloPreenchimento(tipo.id, nome, "", arquivo);
+      setModelos((atuais) => [
+        ...atuais.filter((item) => item.id !== criado.id),
+        criado
+      ]);
+      setModeloId(criado.id);
+      setModoCriacao("documento_completo");
+    } catch (falha) {
+      setErro(
+        falha instanceof Error ? falha.message : "Não foi possível salvar o modelo."
+      );
+      throw falha;
+    } finally {
+      setSalvandoModelo(false);
+    }
+  }
+
+  async function excluirModelo(modelo: ModeloPreenchimento) {
+    if (modelo.origem !== "usuario") return;
+    if (!window.confirm(`Excluir o modelo “${modelo.nome}” da sua biblioteca?`)) return;
+    setErro(null);
+    try {
+      await api.preenchimentos.excluirModelo(modelo.id);
+      const restantes = modelos.filter((item) => item.id !== modelo.id);
+      setModelos(restantes);
+      if (modeloId === modelo.id) {
+        setModeloId(
+          restantes.find((item) => item.tipo_documento === tipoId)?.id || ""
+        );
+      }
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : "Não foi possível excluir o modelo.");
+    }
+  }
+
   function atualizarFotosPrompt(fotos: File[]) {
     setFontes((atuais) => {
       const outrosArquivos = (atuais.documentos_caso || []).filter(
@@ -189,13 +259,15 @@ export default function PaginaPreenchimentos() {
   }
 
   async function iniciar() {
-    if (!tipo || !arquivoBase || enviando) return;
+    const origemValida = modoCriacao === "documento_completo" ? modeloId : arquivoBase;
+    if (!tipo || !origemValida || enviando) return;
     setEnviando(true);
     setErro(null);
     try {
       const criado = await criarPreenchimento(
         tipo.id,
-        arquivoBase,
+        modoCriacao === "completar_minuta" ? arquivoBase : null,
+        modoCriacao === "documento_completo" ? modeloId : null,
         instrucoesNegociacao,
         fontesNovas
       );
@@ -310,6 +382,10 @@ export default function PaginaPreenchimentos() {
   function novo() {
     setPreenchimento(null);
     setArquivoBase(null);
+    setModoCriacao("documento_completo");
+    setModeloId(
+      modelos.find((modelo) => modelo.tipo_documento === tipoId)?.id || ""
+    );
     setInstrucoesNegociacao("");
     setFontes({});
     setSelecionados(new Set());
@@ -332,7 +408,7 @@ export default function PaginaPreenchimentos() {
         <div>
           <p className="rotulo">Preenchimento documental</p>
           <h1>Dos documentos à escritura pronta.</h1>
-          <p>Conte a negociação, envie a minuta e os documentos. A IA monta apenas o que tiver origem e deixa cada inclusão pronta para sua revisão.</p>
+          <p>Use um modelo da biblioteca para criar o ato inteiro ou envie uma minuta para completar. Conte a negociação e a IA monta somente o que estiver comprovado.</p>
         </div>
         <span className="selo-sem-inferencia"><ShieldCheck size={16} /> Sem inferências</span>
       </header>
@@ -345,8 +421,16 @@ export default function PaginaPreenchimentos() {
             <ConfiguracaoPreenchimento
               tipos={tipos}
               tipoId={tipoId}
-              aoMudarTipo={setTipoId}
+              aoMudarTipo={mudarTipo}
               tipo={tipo}
+              modoCriacao={modoCriacao}
+              aoMudarModo={mudarModo}
+              modelos={modelos.filter((modelo) => modelo.tipo_documento === tipo?.id)}
+              modeloId={modeloId}
+              aoMudarModelo={setModeloId}
+              aoCriarModelo={criarModelo}
+              aoExcluirModelo={excluirModelo}
+              salvandoModelo={salvandoModelo}
               arquivoBase={arquivoBase}
               aoMudarBase={setArquivoBase}
               instrucoesNegociacao={instrucoesNegociacao}
@@ -390,7 +474,7 @@ export default function PaginaPreenchimentos() {
           {historico.length ? historico.map((item) => (
             <button key={item.id} type="button" onClick={() => abrirHistorico(item)} className={preenchimento?.id === item.id ? "ativo" : ""}>
               <span><FileArchive size={16} /></span>
-              <span><strong>{item.nome_minuta}</strong><small>{nomeStatus(item)} · {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(item.atualizado_em))}</small></span>
+              <span><strong>{item.modelo_nome || item.nome_minuta}</strong><small>{nomeStatus(item)} · {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(item.atualizado_em))}</small></span>
               <ArrowRight size={15} />
             </button>
           )) : <div className="historico-vazio"><FilePenLine size={22} /><p>Seus casos salvos aparecerão aqui.</p></div>}
@@ -405,6 +489,14 @@ function ConfiguracaoPreenchimento({
   tipoId,
   aoMudarTipo,
   tipo,
+  modoCriacao,
+  aoMudarModo,
+  modelos,
+  modeloId,
+  aoMudarModelo,
+  aoCriarModelo,
+  aoExcluirModelo,
+  salvandoModelo,
   arquivoBase,
   aoMudarBase,
   instrucoesNegociacao,
@@ -422,6 +514,14 @@ function ConfiguracaoPreenchimento({
   tipoId: string;
   aoMudarTipo(valor: string): void;
   tipo?: TipoPreenchimento;
+  modoCriacao: ModoCriacaoPreenchimento;
+  aoMudarModo(valor: ModoCriacaoPreenchimento): void;
+  modelos: ModeloPreenchimento[];
+  modeloId: string;
+  aoMudarModelo(valor: string): void;
+  aoCriarModelo(arquivo: File, nome: string): Promise<void>;
+  aoExcluirModelo(modelo: ModeloPreenchimento): Promise<void>;
+  salvandoModelo: boolean;
   arquivoBase: File | null;
   aoMudarBase(arquivo: File | null): void;
   instrucoesNegociacao: string;
@@ -436,10 +536,25 @@ function ConfiguracaoPreenchimento({
   aoIniciar(): void;
 }) {
   const [entradaOcupada, setEntradaOcupada] = useState(false);
+  const [arquivoModelo, setArquivoModelo] = useState<File | null>(null);
+  const [nomeModelo, setNomeModelo] = useState("");
+  const origemPronta = modoCriacao === "documento_completo" ? Boolean(modeloId) : Boolean(arquivoBase);
+
+  async function salvarModelo() {
+    if (!arquivoModelo || !nomeModelo.trim() || salvandoModelo) return;
+    try {
+      await aoCriarModelo(arquivoModelo, nomeModelo.trim());
+      setArquivoModelo(null);
+      setNomeModelo("");
+    } catch {
+      // A mensagem do backend já é exibida pelo componente pai.
+    }
+  }
+
   return (
     <>
       <section className="etapa-preenchimento">
-        <header><span>01</span><div><p className="rotulo">Tipo de documento</p><h2>Escolha o contrato da minuta</h2></div></header>
+        <header><span>01</span><div><p className="rotulo">Tipo de documento</p><h2>Escolha o ato que será preparado</h2></div></header>
         <label className="seletor-tipo-preenchimento">
           <FilePenLine size={21} />
           <span><small>Documento selecionado</small><strong>{tipo?.nome || "Selecione"}</strong><em>{tipo?.descricao}</em></span>
@@ -450,7 +565,63 @@ function ConfiguracaoPreenchimento({
       </section>
 
       <section className="etapa-preenchimento">
-        <header><span>02</span><div><p className="rotulo">Prompt do preenchimento</p><h2>Escreva, fale ou mostre o que precisa</h2><p>Explique quem vende, quem compra, preço, pagamento e condições. Áudios viram texto para sua revisão; fotos entram como evidência do caso.</p></div></header>
+        <header><span>02</span><div><p className="rotulo">Ponto de partida</p><h2>Crie o documento inteiro ou complete uma minuta</h2><p>O modelo pronto dispensa o envio de uma minuta. A opção de completar preserva tudo o que já existe no seu DOCX.</p></div></header>
+        <div className="modos-criacao">
+          <button type="button" className={modoCriacao === "documento_completo" ? "ativo" : ""} onClick={() => aoMudarModo("documento_completo")} aria-pressed={modoCriacao === "documento_completo"}>
+            <span><FileArchive size={20} /></span>
+            <strong>Usar modelo pronto <small>Recomendado</small></strong>
+            <p>Parte de um modelo da biblioteca e substitui todos os blocos variáveis comprovados.</p>
+            {modoCriacao === "documento_completo" && <CheckCircle2 size={17} />}
+          </button>
+          <button type="button" className={modoCriacao === "completar_minuta" ? "ativo" : ""} onClick={() => aoMudarModo("completar_minuta")} aria-pressed={modoCriacao === "completar_minuta"}>
+            <span><FilePenLine size={20} /></span>
+            <strong>Completar minha minuta</strong>
+            <p>Usa o seu DOCX e mexe somente nas lacunas e marcadores explícitos.</p>
+            {modoCriacao === "completar_minuta" && <CheckCircle2 size={17} />}
+          </button>
+        </div>
+
+        {modoCriacao === "documento_completo" ? (
+          <div className="biblioteca-modelos">
+            <div className="biblioteca-modelos__cabecalho"><div><strong>Modelo que será usado</strong><small>Você pode guardar vários padrões do cartório.</small></div><span>{modelos.length} modelo{modelos.length === 1 ? "" : "s"}</span></div>
+            <div className="lista-modelos">
+              {modelos.map((modelo) => (
+                <article key={modelo.id} className={modeloId === modelo.id ? "ativo" : ""}>
+                  <button type="button" className="modelo-principal" onClick={() => aoMudarModelo(modelo.id)}>
+                    <span><FileText size={18} /></span>
+                    <div><strong>{modelo.nome}</strong><p>{modelo.descricao || modelo.nome_arquivo}</p><small>{modelo.total_blocos} bloco{modelo.total_blocos === 1 ? "" : "s"} estruturado{modelo.total_blocos === 1 ? "" : "s"} · {modelo.origem === "sistema" ? "Modelo do sistema" : "Minha biblioteca"}</small></div>
+                    {modeloId === modelo.id && <Check size={16} />}
+                  </button>
+                  {modelo.origem === "usuario" && <button type="button" className="excluir-modelo" onClick={() => void aoExcluirModelo(modelo)} aria-label={`Excluir ${modelo.nome}`}><X size={14} /></button>}
+                </article>
+              ))}
+            </div>
+            <details className="novo-modelo">
+              <summary><Plus size={15} /> Adicionar outro modelo do cartório</summary>
+              <div>
+                <label className={`upload-modelo ${arquivoModelo ? "pronto" : ""}`}>
+                  <input type="file" accept=".docx" hidden onChange={(evento) => { const arquivo = evento.target.files?.[0] || null; setArquivoModelo(arquivo); if (arquivo) setNomeModelo(arquivo.name.replace(/\.docx$/i, "")); }} />
+                  <UploadCloud size={18} /><span><strong>{arquivoModelo?.name || "Selecionar modelo DOCX"}</strong><small>Use marcadores como [PREENCHER:QUALIFICACAO_VENDEDORES]</small></span>
+                </label>
+                <label className="nome-modelo"><span>Nome na biblioteca</span><input value={nomeModelo} onChange={(evento) => setNomeModelo(evento.target.value)} maxLength={120} placeholder="Ex.: Escritura com pagamento parcelado" /></label>
+                <button className="botao botao--secundario" type="button" onClick={() => void salvarModelo()} disabled={!arquivoModelo || !nomeModelo.trim() || salvandoModelo}>{salvandoModelo ? <><Loader2 size={14} className="girando" /> Salvando…</> : <><FilePlus2 size={14} /> Salvar modelo</>}</button>
+              </div>
+            </details>
+            <p className="dica-marcadores"><ShieldCheck size={15} /> O texto jurídico fixo permanece. A IA substitui todos os blocos variáveis do modelo, mas deixa pendente qualquer bloco sem dados comprovados.</p>
+          </div>
+        ) : (
+          <div className="minuta-propria">
+            <label className={`upload-minuta ${arquivoBase ? "upload-minuta--pronta" : ""}`}>
+              <input type="file" accept=".docx" hidden onChange={(evento) => aoMudarBase(evento.target.files?.[0] || null)} />
+              {arquivoBase ? <><FileCheck2 size={28} /><span><strong>{arquivoBase.name}</strong><small>{formatarTamanho(arquivoBase.size)} · o original não será alterado</small></span><button type="button" onClick={(evento) => { evento.preventDefault(); aoMudarBase(null); }} aria-label="Remover minuta"><X size={16} /></button></> : <><UploadCloud size={29} /><span><strong>Solte ou selecione a minuta</strong><small>DOCX pronto ou parcial; só as lacunas explícitas serão modificadas</small></span></>}
+            </label>
+            <p className="dica-marcadores"><Sparkles size={15} /> A minuta pode usar sublinhados, <code>&lt;&lt;NOME_DO_CAMPO&gt;&gt;</code> ou blocos <code>[PREENCHER:NOME_DO_BLOCO]</code>.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="etapa-preenchimento">
+        <header><span>03</span><div><p className="rotulo">Prompt do preenchimento</p><h2>Escreva, fale ou mostre a negociação</h2><p>Explique quem vende, quem compra, preço, pagamento e condições. Áudios viram texto para sua revisão; fotos entram como evidência do caso.</p></div></header>
         <EntradaNegociacao
           valor={instrucoesNegociacao}
           aoMudar={aoMudarInstrucoes}
@@ -462,15 +633,6 @@ function ConfiguracaoPreenchimento({
         />
       </section>
 
-      <section className="etapa-preenchimento">
-        <header><span>03</span><div><p className="rotulo">Arquivo que volta pronto</p><h2>Envie a minuta em DOCX</h2></div></header>
-        <label className={`upload-minuta ${arquivoBase ? "upload-minuta--pronta" : ""}`}>
-          <input type="file" accept=".docx" hidden onChange={(evento) => aoMudarBase(evento.target.files?.[0] || null)} />
-          {arquivoBase ? <><FileCheck2 size={28} /><span><strong>{arquivoBase.name}</strong><small>{formatarTamanho(arquivoBase.size)} · o original não será alterado</small></span><button type="button" onClick={(evento) => { evento.preventDefault(); aoMudarBase(null); }} aria-label="Remover minuta"><X size={16} /></button></> : <><UploadCloud size={29} /><span><strong>Solte ou selecione a minuta</strong><small>DOCX com conteúdo pronto, parcial ou apenas marcadores</small></span></>}
-        </label>
-        <p className="dica-marcadores"><Sparkles size={15} /> Para a IA redigir trechos inteiros, a minuta pode usar marcadores como <code>[PREENCHER:QUALIFICACAO_VENDEDORES]</code> e <code>[PREENCHER:PRECO_E_PAGAMENTO]</code>. Esses blocos sempre exigem revisão.</p>
-      </section>
-
       {tipo && <section className="etapa-preenchimento">
         <header><span>04</span><div><p className="rotulo">Documentos do caso</p><h2>Envie tudo junto ou organize por tipo</h2><p>Você pode usar a primeira área para todos os arquivos. As categorias abaixo continuam disponíveis quando quiser organizar as fontes.</p></div></header>
         <GradeFontes tipo={tipo} fontes={fontes} aoMudar={aoMudarCategoria} />
@@ -478,7 +640,7 @@ function ConfiguracaoPreenchimento({
 
       <footer className="acoes-inicio-preenchimento">
         <span><ShieldCheck size={16} /> Papéis declarados orientam a montagem; dados pessoais continuam exigindo fonte.</span>
-        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!arquivoBase || enviando || entradaOcupada}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : entradaOcupada ? <><Loader2 size={16} className="girando" /> Finalizando entrada…</> : <><Sparkles size={16} /> Analisar e montar</>}</button>
+        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!origemPronta || enviando || entradaOcupada}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : entradaOcupada ? <><Loader2 size={16} className="girando" /> Finalizando entrada…</> : modoCriacao === "documento_completo" ? <><Sparkles size={16} /> Criar escritura para revisar</> : <><Sparkles size={16} /> Completar minuta para revisar</>}</button>
       </footer>
     </>
   );

@@ -12,6 +12,7 @@ import type { NovaSugestao, SugestaoCriada } from "@/types/sugestoes";
 import type {
   ArquivoPreenchimento,
   FonteSelecionada,
+  ModeloPreenchimento,
   Preenchimento,
   TranscricaoAudio,
   TipoPreenchimento
@@ -166,6 +167,14 @@ export const api = {
   },
   preenchimentos: {
     tipos: () => requisitar<TipoPreenchimento[]>("/api/v1/preenchimentos/tipos"),
+    modelos: (tipoDocumento?: string) =>
+      requisitar<ModeloPreenchimento[]>(
+        `/api/v1/preenchimentos/modelos${tipoDocumento ? `?tipo_documento=${encodeURIComponent(tipoDocumento)}` : ""}`
+      ),
+    excluirModelo: (id: string) =>
+      requisitar<{ excluido: boolean }>(`/api/v1/preenchimentos/modelos/${id}`, {
+        metodo: "DELETE"
+      }),
     listar: () => requisitar<Preenchimento[]>("/api/v1/preenchimentos?limite=20"),
     buscar: (id: string, sinal?: AbortSignal) =>
       requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}`, { sinal }),
@@ -190,14 +199,16 @@ export const api = {
 
 export async function criarPreenchimento(
   tipoDocumento: string,
-  arquivoBase: File,
+  arquivoBase: File | null,
+  modeloId: string | null,
   instrucoesNegociacao: string,
   fontes: FonteSelecionada[],
   repetirAposRefresh = false
 ): Promise<Preenchimento> {
   const formulario = new FormData();
   formulario.append("tipo_documento", tipoDocumento);
-  formulario.append("arquivo_base", arquivoBase);
+  if (arquivoBase) formulario.append("arquivo_base", arquivoBase);
+  if (modeloId) formulario.append("modelo_id", modeloId);
   formulario.append("instrucoes_negociacao", instrucoesNegociacao);
   fontes.forEach((fonte) => {
     formulario.append("categorias_fontes", fonte.categoria);
@@ -211,10 +222,31 @@ export async function criarPreenchimento(
       criarPreenchimento(
         tipoDocumento,
         arquivoBase,
+        modeloId,
         instrucoesNegociacao,
         fontes,
         true
       )
+  );
+}
+
+export async function criarModeloPreenchimento(
+  tipoDocumento: string,
+  nome: string,
+  descricao: string,
+  arquivo: File,
+  repetirAposRefresh = false
+): Promise<ModeloPreenchimento> {
+  const formulario = new FormData();
+  formulario.append("tipo_documento", tipoDocumento);
+  formulario.append("nome", nome);
+  formulario.append("descricao", descricao);
+  formulario.append("arquivo", arquivo);
+  return enviarFormularioPreenchimento(
+    "/api/v1/preenchimentos/modelos",
+    formulario,
+    repetirAposRefresh,
+    () => criarModeloPreenchimento(tipoDocumento, nome, descricao, arquivo, true)
   );
 }
 
@@ -267,12 +299,12 @@ export async function transcreverAudioPreenchimento(
   return resposta.json() as Promise<TranscricaoAudio>;
 }
 
-async function enviarFormularioPreenchimento(
+async function enviarFormularioPreenchimento<T>(
   caminho: string,
   formulario: FormData,
   repetirAposRefresh: boolean,
-  repetir: () => Promise<Preenchimento>
-): Promise<Preenchimento> {
+  repetir: () => Promise<T>
+): Promise<T> {
   const token = await obterToken();
   let resposta: Response;
   try {
@@ -292,7 +324,7 @@ async function enviarFormularioPreenchimento(
     if (renovado) return repetir();
   }
   if (!resposta.ok) throw await criarErro(resposta);
-  return resposta.json() as Promise<Preenchimento>;
+  return resposta.json() as Promise<T>;
 }
 
 export async function enviarDocumento(
