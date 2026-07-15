@@ -102,8 +102,8 @@ aba fica oculta.
 
 ## Deploy no Railway
 
-O `railway.json` executa `npm ci && npm run build`, inicia o Next em `$PORT` e usa
-`/health` como health check.
+O Railpack instala as dependências com `npm ci`; o `railway.json` executa o build,
+inicia o Next em `$PORT` e usa `/health` como health check.
 
 1. Crie um projeto/serviço `transdocs-web`, separado de qualquer Padoka.
 2. Conecte este repositório na branch `main`.
