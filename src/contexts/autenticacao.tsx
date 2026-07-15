@@ -17,6 +17,7 @@ interface AutenticacaoContexto {
     email: string,
     senha: string
   ): Promise<{ confirmacaoEmailNecessaria: boolean }>;
+  reenviarConfirmacao(email: string): Promise<void>;
   recuperar(email: string): Promise<void>;
   atualizarSenha(senha: string): Promise<void>;
   atualizarPerfil(nome: string): Promise<void>;
@@ -58,13 +59,26 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
         if (error) throw new Error(traduzirErroAuth(error.message));
       },
       async cadastrar(nome, email, senha) {
+        const redirecionamento = `${window.location.origin}/auth/login?confirmado=1`;
         const { data, error } = await supabase.auth.signUp({
           email,
           password: senha,
-          options: { data: { nome } }
+          options: {
+            data: { nome },
+            emailRedirectTo: redirecionamento
+          }
         });
         if (error) throw new Error(traduzirErroAuth(error.message));
         return { confirmacaoEmailNecessaria: !data.session };
+      },
+      async reenviarConfirmacao(email) {
+        const redirecionamento = `${window.location.origin}/auth/login?confirmado=1`;
+        const { error } = await supabase.auth.resend({
+          type: "signup",
+          email,
+          options: { emailRedirectTo: redirecionamento }
+        });
+        if (error) throw new Error(traduzirErroAuth(error.message));
       },
       async recuperar(email) {
         const destino = `${window.location.origin}/auth/nova-senha`;

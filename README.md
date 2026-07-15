@@ -20,7 +20,7 @@ o documento, evitando a aparência de painel administrativo comum.
 
 Fluxos implementados:
 
-- login, cadastro, recuperação e redefinição de senha;
+- login, cadastro, confirmação com reenvio, recuperação e redefinição de senha;
 - bancada inicial com upload por clique ou arrastar/soltar;
 - progresso e cancelamento do upload;
 - histórico, busca, filtros e exclusão permanente;
@@ -72,11 +72,13 @@ Abra `http://localhost:3000`.
 Nenhuma chave OpenAI ou service role pode ter prefixo `NEXT_PUBLIC_` ou existir neste
 repositório.
 
-No Supabase Auth, inclua estas URLs permitidas:
+No Supabase Auth, configure o domínio publicado como Site URL e inclua estas URLs
+permitidas:
 
 ```text
 http://localhost:3000/auth/nova-senha
-https://SEU-DOMINIO/auth/nova-senha
+http://localhost:3000/**
+https://SEU-DOMINIO/**
 ```
 
 ## Scripts
