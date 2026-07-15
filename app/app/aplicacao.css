@@ -23,3 +23,47 @@
 
 .pagina-configuracoes { width: min(980px, calc(100% - 44px)); }.grade-configuracoes { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }.cartao-config { padding: 24px; border: 1px solid var(--linha); border-radius: 15px; background: rgba(12,26,22,.57); }.cartao-config > header { display: flex; gap: 12px; }.cartao-config > header > span { width: 38px; height: 38px; flex: none; display: grid; place-items: center; border: 1px solid var(--linha); border-radius: 10px; color: var(--acento); background: rgba(113,230,190,.04); }.cartao-config h2 { margin: 2px 0 6px; font-family: var(--fonte-display); font-size: 1rem; letter-spacing: -.025em; }.cartao-config header p { margin: 0; color: #748a80; font-size: .65rem; line-height: 1.5; }.cartao-config--perfil { grid-row: span 2; }.cartao-config form { margin-top: 25px; display: grid; gap: 17px; }.cartao-config form .botao { margin-top: 4px; justify-self: start; }.campo__controle--bloqueado { opacity: .65; }.lista-protecao { margin: 22px 0 0; padding: 0; display: grid; gap: 15px; list-style: none; }.lista-protecao li { display: flex; gap: 10px; color: #799a8c; }.lista-protecao strong { color: #bacbc4; font-size: .68rem; }.lista-protecao p { margin: 4px 0 0; color: #70867c; font-size: .61rem; line-height: 1.45; }.cartao-config--retencao { grid-column: 2; }.cartao-config--sessao { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; }.cartao-config--sessao > div { display: flex; align-items: center; gap: 11px; color: #8da298; }.cartao-config--sessao span { display: grid; gap: 4px; }.cartao-config--sessao strong { color: #c3d2cc; font-size: .7rem; }.cartao-config--sessao small { color: #70867c; font-size: .61rem; }
 @media (max-width: 760px) { .grade-configuracoes { grid-template-columns: 1fr; }.cartao-config--retencao, .cartao-config--sessao { grid-column: auto; }.cartao-config--sessao { align-items: flex-start; flex-direction: column; }.cartao-config--sessao .botao { width: 100%; } }
+
+/* A área de trabalho usa uma base clara para reduzir o cansaço em sessões longas. */
+.aplicacao {
+  --fundo: #f1f5f2;
+  --texto: #23352f;
+  --texto-suave: #667970;
+  --acento: #2f8064;
+  --perigo: #b34f48;
+  --ambar: #a7732d;
+  --painel: rgba(255, 255, 255, .9);
+  --linha: rgba(47, 74, 64, .13);
+  --linha-forte: rgba(47, 74, 64, .23);
+  color-scheme: light;
+  color: var(--texto);
+  background: radial-gradient(circle at 82% -12%, rgba(98, 162, 135, .13), transparent 31%), #f1f5f2;
+}
+.aplicacao .barra-app { background: rgba(249, 251, 250, .88); box-shadow: 0 1px 0 rgba(255,255,255,.7); }
+.aplicacao .navegacao-app a { color: #667a71; }.aplicacao .navegacao-app a:hover, .aplicacao .navegacao-app a.ativo { color: #1f352d; }
+.aplicacao .conta-app__botao { color: var(--texto); }.aplicacao .conta-app__botao:hover { background: rgba(39, 91, 70, .055); }
+.aplicacao .avatar { color: #246c54; border-color: rgba(47,128,100,.24); background: rgba(75,151,122,.09); }
+.aplicacao .conta-app__texto small { color: #72877e; }
+.aplicacao .conta-app__menu { background: #ffffff; box-shadow: 0 24px 60px rgba(38,58,50,.14); }.aplicacao .conta-app__menu a, .aplicacao .conta-app__menu button { color: #536a60; }.aplicacao .conta-app__menu a:hover, .aplicacao .conta-app__menu button:hover { color: var(--texto); background: #f1f6f3; }
+.aplicacao .aviso-humano { color: #866d44; border-color: rgba(167,115,45,.13); background: #faf6ed; }
+.aplicacao .sinal-sistema { color: #60776c; background: rgba(255,255,255,.56); }
+.aplicacao .zona-upload { border-color: rgba(47,128,100,.3); background: radial-gradient(circle at 50% 120%, rgba(70,153,120,.12), transparent 46%), rgba(255,255,255,.8); box-shadow: 0 18px 55px rgba(53,85,72,.045); }
+.aplicacao .zona-upload--ativa { border-color: rgba(47,128,100,.7); background-color: #e4f1eb; }
+.aplicacao .zona-upload__icone, .aplicacao .arquivo-pronto__icone { color: #2d7c61; background: #e9f4ef; }
+.aplicacao .zona-upload__formatos { color: #74887f; }
+.aplicacao .arquivo-pronto { background: rgba(255,255,255,.96); box-shadow: 0 16px 45px rgba(48,76,64,.08); }
+.aplicacao .icone-botao { color: #60776c; background: #f7faf8; }.aplicacao .icone-botao:hover { color: var(--texto); background: #edf4f0; }
+.aplicacao .botao--primario { color: #fff; background: linear-gradient(135deg, #3c9271, #2f795f); box-shadow: 0 12px 32px rgba(47,128,100,.17); }.aplicacao .botao--primario:hover:not(:disabled) { background: linear-gradient(135deg, #348768, #286e56); }
+.aplicacao .botao--secundario { color: #405c50; background: rgba(255,255,255,.76); }.aplicacao .botao--secundario:hover:not(:disabled) { background: #fff; }
+.aplicacao .botao--perigo { color: #9f403a; border-color: rgba(179,79,72,.25); background: #fff4f2; }
+.aplicacao .resumo-bancada { background: rgba(255,255,255,.67); box-shadow: 0 13px 40px rgba(48,76,64,.035); }.aplicacao .resumo-bancada article > span { color: #4f806c; }.aplicacao .resumo-bancada small, .aplicacao .resumo-bancada > p { color: #74877f; }
+.aplicacao .linha-documento:hover { background: rgba(255,255,255,.62); }.aplicacao .linha-documento__icone { color: #377e63; background: #edf6f1; }.aplicacao .linha-documento__nome small { color: #71837b; }.aplicacao .linha-documento__abrir { color: #71867c; }
+.aplicacao .status { color: #60756c; background: rgba(255,255,255,.7); }.aplicacao .status--processando, .aplicacao .status--pendente { color: #8b652a; background: #fbf5e9; }.aplicacao .status--concluido, .aplicacao .status--revisado { color: #287257; background: #edf7f2; }.aplicacao .status--erro_leitura, .aplicacao .status--erro_arquivo, .aplicacao .status--erro_openai, .aplicacao .status--erro_interno { color: #a64b44; background: #fff3f1; }
+.aplicacao .estado-vazio { color: #70847b; }.aplicacao .estado-vazio svg { color: #739b8a; }.aplicacao .estado-vazio strong { color: #40584e; }
+.aplicacao .busca-documentos, .aplicacao .filtro-status { color: #657a70; background: rgba(255,255,255,.84); }.aplicacao .filtro-status select { color: #40584e; }.aplicacao .filtro-status option { background: #fff; }
+.aplicacao .modal-fundo { background: rgba(45,59,53,.42); }.aplicacao .modal { background: #fff; box-shadow: 0 40px 100px rgba(35,52,45,.2); }
+.aplicacao .carregamento-raiz { color: #687d73; background: #f1f5f2; }
+.aplicacao .cartao-config { background: rgba(255,255,255,.78); box-shadow: 0 14px 42px rgba(47,73,62,.035); }.aplicacao .cartao-config > header > span { background: #edf6f1; }.aplicacao .cartao-config header p, .aplicacao .lista-protecao p { color: #70837a; }.aplicacao .lista-protecao li { color: #47705e; }.aplicacao .lista-protecao strong, .aplicacao .cartao-config--sessao strong { color: #3a5147; }
+.aplicacao .campo { color: #435c51; }.aplicacao .campo__controle { color: #698077; background: rgba(255,255,255,.82); }.aplicacao .campo__controle:focus-within { background: #fff; }.aplicacao .campo__controle input { color: var(--texto); }.aplicacao .campo__controle input::placeholder { color: #95a49e; }
+.aplicacao .aviso--erro { color: #963f39; background: #fff3f1; }.aplicacao .aviso--sucesso { color: #286e56; background: #edf7f2; }.aplicacao .aviso--atencao { color: #856329; background: #fbf5e9; }
+@media (max-width: 820px) { .aplicacao .navegacao-app { background: rgba(255,255,255,.94); box-shadow: 0 20px 60px rgba(39,59,50,.16); }.aplicacao .navegacao-app a.ativo { background: #eaf4ef; } }

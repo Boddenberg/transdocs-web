@@ -14,9 +14,9 @@ projeto Supabase Auth exclusivo.
 
 ## Experiência e design
 
-A identidade usa verde mineral, grafite profundo e âmbar de atenção para associar
-privacidade, precisão e conferência. A navegação é horizontal e a tela principal prioriza
-o documento, evitando a aparência de painel administrativo comum.
+A identidade combina verde mineral e âmbar com superfícies claras na área de trabalho,
+reduzindo o cansaço em conferências longas. A navegação é horizontal e a tela principal
+prioriza o documento, evitando a aparência de painel administrativo comum.
 
 Fluxos implementados:
 
@@ -27,6 +27,8 @@ Fluxos implementados:
 - acompanhamento moderado de processamento (3 s em primeiro plano, 12 s oculto);
 - visualizador de PDF/imagem e navegação por páginas;
 - dados extraídos ao lado do documento;
+- visão resumida com cópia individual ou de todos os dados estruturados;
+- visão detalhada com origem, confiança, edição e confirmação;
 - confiança, trecho e página de origem;
 - filtro de itens incertos, alertas e campos ausentes;
 - copiar, editar e confirmar valor;
