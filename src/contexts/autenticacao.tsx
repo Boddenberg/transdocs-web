@@ -15,6 +15,7 @@ interface AutenticacaoContexto {
   cadastrar(nome: string, email: string, senha: string): Promise<void>;
   recuperar(email: string): Promise<void>;
   atualizarSenha(senha: string): Promise<void>;
+  atualizarPerfil(nome: string): Promise<void>;
   sair(): Promise<void>;
 }
 
@@ -70,6 +71,10 @@ export function ProvedorAutenticacao({ children }: { children: ReactNode }) {
       async atualizarSenha(senha) {
         const { error } = await supabase.auth.updateUser({ password: senha });
         if (error) throw new Error(traduzirErroAuth(error.message));
+      },
+      async atualizarPerfil(nome) {
+        const { error } = await supabase.auth.updateUser({ data: { nome: nome.trim() } });
+        if (error) throw new Error("Não foi possível atualizar o perfil.");
       },
       async sair() {
         const { error } = await supabase.auth.signOut();
