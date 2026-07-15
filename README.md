@@ -110,7 +110,9 @@ aba fica oculta.
 
 O preenchimento segue a mesma estratégia de acompanhamento. Valores encontrados em texto
 só são pré-selecionados quando a evidência literal passa na validação do servidor; leituras
-visuais permanecem desmarcadas para conferência humana.
+visuais permanecem desmarcadas para conferência humana. A revisão oferece seleção em lote,
+edição dos valores sugeridos e preenchimento manual de lacunas ainda sem fonte; ajustes são
+enviados ao servidor somente quando o campo correspondente está selecionado.
 
 ## Deploy no Railway
 

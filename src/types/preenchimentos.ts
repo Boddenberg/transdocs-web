@@ -47,6 +47,8 @@ export interface CampoPreenchimento {
   contexto: string;
   status: StatusCampoPreenchimento;
   valor: string | null;
+  valor_original?: string | null;
+  editado_pelo_usuario?: boolean;
   fonte_id: string | null;
   fonte_nome: string | null;
   categoria_fonte: string | null;

@@ -168,11 +168,17 @@ export const api = {
     listar: () => requisitar<Preenchimento[]>("/api/v1/preenchimentos?limite=20"),
     buscar: (id: string, sinal?: AbortSignal) =>
       requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}`, { sinal }),
-    gerar: (id: string, camposIncluir: string[], permitirIncompleto: boolean) =>
+    gerar: (
+      id: string,
+      camposIncluir: string[],
+      valoresCampos: Record<string, string>,
+      permitirIncompleto: boolean
+    ) =>
       requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}/gerar`, {
         metodo: "POST",
         corpo: {
           campos_incluir: camposIncluir,
+          valores_campos: valoresCampos,
           permitir_incompleto: permitirIncompleto
         }
       }),
