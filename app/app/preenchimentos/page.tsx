@@ -67,6 +67,14 @@ function selecaoComprovada(
   );
 }
 
+function humanizarAlerta(alerta: string, campos: CampoPreenchimento[]) {
+  let mensagem = alerta;
+  campos.forEach((campo, indice) => {
+    mensagem = mensagem.replaceAll(campo.id, `Lacuna ${indice + 1}`);
+  });
+  return mensagem.replace(/\bcampo_[0-9a-f]{16}\b/gi, "Uma lacuna");
+}
+
 function nomeStatus(preenchimento: Preenchimento) {
   return {
     pendente: "Na fila",
@@ -226,17 +234,18 @@ export default function PaginaPreenchimentos() {
     setSelecionados(new Set(ids));
   }
 
-  async function gerar(permitirIncompleto: boolean) {
+  async function gerar(permitirIncompleto: boolean, camposIncluir?: string[]) {
     if (!preenchimento || gerando) return;
+    const idsSelecionados = new Set(camposIncluir ?? Array.from(selecionados));
     setGerando(true);
     setErro(null);
     try {
       const valoresSelecionados = Object.fromEntries(
-        Object.entries(valoresEditados).filter(([campoId]) => selecionados.has(campoId))
+        Object.entries(valoresEditados).filter(([campoId]) => idsSelecionados.has(campoId))
       );
       const atualizado = await api.preenchimentos.gerar(
         preenchimento.id,
-        Array.from(selecionados),
+        Array.from(idsSelecionados),
         valoresSelecionados,
         permitirIncompleto
       );
@@ -437,38 +446,46 @@ function EstadoErro({ preenchimento, aoNovo }: { preenchimento: Preenchimento; a
   return <section className="estado-preenchimento estado-preenchimento--erro"><span className="orbe-preenchimento"><AlertCircle size={30} /></span><p className="rotulo">{nomeStatus(preenchimento)}</p><h2>A minuta não foi modificada.</h2><p>{preenchimento.status === "erro_arquivo" ? "Confirme se o arquivo é uma escritura pública de venda e compra em DOCX válido." : "Tente novamente mais tarde ou inicie um novo preenchimento."}</p><button className="botao botao--secundario" onClick={aoNovo}>Novo preenchimento</button></section>;
 }
 
-function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, fontesNovas, selecionados, valoresEditados, aoAlternar, aoMudarValor, aoDefinirSelecionados, aoAdicionar, aoGerar, aoNovo, enviando, gerando }: { preenchimento: Preenchimento & { resultado: ResultadoPreenchimento }; tipo?: TipoPreenchimento; fontes: Record<string, File[]>; aoMudarCategoria(categoria: string, arquivos: File[]): void; fontesNovas: FonteSelecionada[]; selecionados: Set<string>; valoresEditados: Record<string, string>; aoAlternar(campo: CampoPreenchimento): void; aoMudarValor(campo: CampoPreenchimento, valor: string): void; aoDefinirSelecionados(ids: string[]): void; aoAdicionar(): void; aoGerar(incompleto: boolean): void; aoNovo(): void; enviando: boolean; gerando: boolean }) {
+function RevisaoPreenchimento({ preenchimento, tipo, fontes, aoMudarCategoria, fontesNovas, selecionados, valoresEditados, aoAlternar, aoMudarValor, aoDefinirSelecionados, aoAdicionar, aoGerar, aoNovo, enviando, gerando }: { preenchimento: Preenchimento & { resultado: ResultadoPreenchimento }; tipo?: TipoPreenchimento; fontes: Record<string, File[]>; aoMudarCategoria(categoria: string, arquivos: File[]): void; fontesNovas: FonteSelecionada[]; selecionados: Set<string>; valoresEditados: Record<string, string>; aoAlternar(campo: CampoPreenchimento): void; aoMudarValor(campo: CampoPreenchimento, valor: string): void; aoDefinirSelecionados(ids: string[]): void; aoAdicionar(): void; aoGerar(incompleto: boolean, camposIncluir?: string[]): void; aoNovo(): void; enviando: boolean; gerando: boolean }) {
   const { resultado } = preenchimento;
   const valorAtual = (campo: CampoPreenchimento) => valoresEditados[campo.id] ?? campo.valor ?? "";
   const camposComValor = resultado.campos.filter((campo) => valorAtual(campo).trim());
+  const camposSemValor = resultado.campos.filter((campo) => !valorAtual(campo).trim());
+  const idsTodosCampos = resultado.campos.map((campo) => campo.id);
   const todosComValorSelecionados = camposComValor.length > 0 && camposComValor.every((campo) => selecionados.has(campo.id));
   const documentoCompleto = resultado.campos.every((campo) => valorAtual(campo).trim() && selecionados.has(campo.id));
+  const alertasHumanizados = resultado.alertas.map((alerta) => humanizarAlerta(alerta, resultado.campos));
+  const mensagemGeracao = camposSemValor.length
+    ? `Faltam valores em ${camposSemValor.length} lacuna${camposSemValor.length === 1 ? "" : "s"}. Preencha os campos ou gere somente o que já selecionou.`
+    : documentoCompleto
+      ? `Tudo pronto: ${resultado.campos.length} campo${resultado.campos.length === 1 ? "" : "s"} serão aplicados ao DOCX.`
+      : `Os ${resultado.campos.length} valores estão prontos. O botão principal selecionará todos e gerará o DOCX.`;
   return (
     <>
       <section className="resumo-preenchimento">
         <div><p className="rotulo">Mapa da minuta</p><h2>{resultado.total_pendentes ? "Há dados que ainda precisam de fonte." : "Todas as lacunas têm evidência."}</h2><p>{preenchimento.nome_minuta}</p></div>
         <div className="numeros-preenchimento"><span><strong>{resultado.total_campos}</strong><small>lacunas</small></span><span className="positivo"><strong>{resultado.total_encontrados}</strong><small>com fonte</small></span><span className={resultado.total_pendentes ? "pendente" : "positivo"}><strong>{resultado.total_pendentes}</strong><small>pendentes</small></span></div>
       </section>
-      {resultado.alertas.length > 0 && <div className="alertas-preenchimento">{resultado.alertas.map((alerta) => <p key={alerta}><AlertCircle size={14} />{alerta}</p>)}</div>}
+      {alertasHumanizados.length > 0 && <div className="alertas-preenchimento"><strong><AlertCircle size={15} /> Pontos para conferir</strong>{alertasHumanizados.map((alerta, indice) => <p key={`${indice}-${alerta}`}>{alerta}</p>)}</div>}
       <section className="campos-preenchimento">
         <header><div><p className="rotulo">Conferência antes de escrever</p><h2>Revise, edite e escolha o que será escrito</h2></div><div className="acoes-selecao-campos"><small>{selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}</small><button type="button" onClick={() => aoDefinirSelecionados(todosComValorSelecionados ? [] : camposComValor.map((campo) => campo.id))} disabled={!camposComValor.length}>{todosComValorSelecionados ? "Limpar seleção" : `Selecionar ${camposComValor.length} com valor`}</button></div></header>
-        {resultado.campos.length ? resultado.campos.map((campo) => <CampoMapeado key={campo.id} campo={campo} valor={valorAtual(campo)} editado={Object.hasOwn(valoresEditados, campo.id)} selecionado={selecionados.has(campo.id)} aoAlternar={() => aoAlternar(campo)} aoMudarValor={(valor) => aoMudarValor(campo, valor)} />) : <div className="sem-lacunas"><CheckCircle2 size={25} /><strong>Nenhum marcador de preenchimento foi encontrado.</strong><p>Você pode devolver uma cópia idêntica da minuta.</p></div>}
+        {resultado.campos.length ? resultado.campos.map((campo, indice) => <CampoMapeado key={campo.id} numero={indice + 1} campo={campo} valor={valorAtual(campo)} editado={Object.hasOwn(valoresEditados, campo.id)} selecionado={selecionados.has(campo.id)} aoAlternar={() => aoAlternar(campo)} aoMudarValor={(valor) => aoMudarValor(campo, valor)} />) : <div className="sem-lacunas"><CheckCircle2 size={25} /><strong>Nenhum marcador de preenchimento foi encontrado.</strong><p>Você pode devolver uma cópia idêntica da minuta.</p></div>}
       </section>
       {resultado.total_pendentes > 0 && tipo && <section className="fontes-complementares"><header><span><Plus size={17} /></span><div><p className="rotulo">Continuar depois</p><h2>Recebeu um documento que faltava?</h2><p>Adicione novas fontes; este caso já está salvo e será analisado novamente.</p></div></header><GradeFontes tipo={tipo} fontes={fontes} aoMudar={aoMudarCategoria} /><button className="botao botao--secundario" type="button" onClick={aoAdicionar} disabled={!fontesNovas.length || enviando}>{enviando ? <><Loader2 size={15} className="girando" /> Reanalisando…</> : <><RefreshCw size={15} /> Adicionar e reanalisar</>}</button></section>}
       <footer className="acoes-geracao">
         <button className="botao botao--secundario" type="button" onClick={aoNovo}>Novo caso</button>
-        <div><p>{resultado.total_pendentes ? "Campos sem fonte podem ficar em branco ou ser preenchidos manualmente por você." : "O servidor aplicará somente os campos selecionados e os ajustes confirmados."}</p>{resultado.total_pendentes > 0 && <button className="botao botao--secundario" type="button" onClick={() => aoGerar(true)} disabled={gerando || selecionados.size === 0}>{gerando ? <Loader2 className="girando" size={15} /> : <Download size={15} />} Gerar com selecionados</button>}<button className="botao botao--primario" type="button" onClick={() => aoGerar(false)} disabled={gerando || (resultado.campos.length > 0 && !documentoCompleto)}>{gerando ? <Loader2 className="girando" size={15} /> : <FileCheck2 size={15} />} Gerar documento completo</button></div>
+        <div><p>{mensagemGeracao}</p>{selecionados.size > 0 && !documentoCompleto && <button className="botao botao--secundario" type="button" onClick={() => aoGerar(true)} disabled={gerando}>{gerando ? <Loader2 className="girando" size={15} /> : <Download size={15} />} Gerar só {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}</button>}<button className="botao botao--primario" type="button" onClick={() => { aoDefinirSelecionados(idsTodosCampos); aoGerar(false, idsTodosCampos); }} disabled={gerando || camposSemValor.length > 0}>{gerando ? <><Loader2 className="girando" size={15} /> Gerando…</> : camposSemValor.length ? <><AlertCircle size={15} /> Falta{camposSemValor.length === 1 ? "" : "m"} {camposSemValor.length} valor{camposSemValor.length === 1 ? "" : "es"}</> : documentoCompleto ? <><FileCheck2 size={15} /> Gerar documento completo</> : <><FileCheck2 size={15} /> Selecionar {resultado.campos.length} e gerar</>}</button></div>
       </footer>
     </>
   );
 }
 
-function CampoMapeado({ campo, valor, editado, selecionado, aoAlternar, aoMudarValor }: { campo: CampoPreenchimento; valor: string; editado: boolean; selecionado: boolean; aoAlternar(): void; aoMudarValor(valor: string): void }) {
+function CampoMapeado({ numero, campo, valor, editado, selecionado, aoAlternar, aoMudarValor }: { numero: number; campo: CampoPreenchimento; valor: string; editado: boolean; selecionado: boolean; aoAlternar(): void; aoMudarValor(valor: string): void }) {
   const encontrado = campo.status === "encontrado";
   const ajusteManual = editado || Boolean(campo.editado_pelo_usuario);
   const temValor = Boolean(valor.trim());
   return <article className={`campo-mapeado campo-mapeado--${campo.status} ${selecionado ? "campo-mapeado--selecionado" : ""}`}>
     <button type="button" className="selecao-campo" onClick={aoAlternar} disabled={!temValor} aria-label={temValor ? `${selecionado ? "Remover" : "Incluir"} ${campo.rotulo}` : `Preencha ${campo.rotulo} para incluir`}>{selecionado ? <Check size={14} /> : temValor ? <span /> : <AlertCircle size={14} />}</button>
-    <div className="campo-mapeado__conteudo"><header><span className={`etiqueta-campo ${ajusteManual ? "etiqueta-campo--manual" : `etiqueta-campo--${campo.status}`}`}>{ajusteManual ? "Ajuste manual" : campo.status === "encontrado" ? campo.autoaplicavel ? "Evidência textual" : "Revisão visual" : campo.status === "ambiguo" ? "Ambíguo" : "Sem fonte"}</span><code>{campo.marcador}</code></header><h3>{campo.rotulo}</h3><label className="edicao-valor-campo"><span>Valor que será escrito</span><textarea value={valor} onChange={(evento) => aoMudarValor(evento.target.value)} placeholder="Digite o valor manualmente" maxLength={1000} rows={valor.length > 90 ? 3 : 1} /></label>{editado && campo.valor && campo.valor !== valor && <p className="valor-original-campo">Valor salvo anteriormente: {campo.valor}</p>}{campo.valor_original && <p className="valor-original-campo">Sugestão documental original: {campo.valor_original}</p>}{encontrado && campo.fonte_nome ? <><p className="origem-preenchimento"><ShieldCheck size={13} />{campo.fonte_nome}{campo.pagina ? ` · página ${campo.pagina}` : ""} · {Math.round(campo.confianca * 100)}%</p>{campo.trecho && <blockquote>“{campo.trecho}”</blockquote>}</> : <><p className="justificativa-campo">{campo.justificativa}</p><p className="contexto-campo">{campo.contexto}</p></>}</div>
+    <div className="campo-mapeado__conteudo"><header><span className={`etiqueta-campo ${ajusteManual ? "etiqueta-campo--manual" : `etiqueta-campo--${campo.status}`}`}>{ajusteManual ? "Ajuste manual" : campo.status === "encontrado" ? campo.autoaplicavel ? "Evidência textual" : "Revisão visual" : campo.status === "ambiguo" ? "Ambíguo" : "Sem fonte"}</span><span className="numero-lacuna">Lacuna {String(numero).padStart(2, "0")}</span><code>{campo.marcador}</code></header><h3>{campo.rotulo}</h3><label className="edicao-valor-campo"><span>Valor que será escrito</span><textarea value={valor} onChange={(evento) => aoMudarValor(evento.target.value)} placeholder="Digite o valor manualmente" maxLength={1000} rows={valor.length > 90 ? 3 : 1} /></label>{editado && campo.valor && campo.valor !== valor && <p className="valor-original-campo">Valor salvo anteriormente: {campo.valor}</p>}{campo.valor_original && <p className="valor-original-campo">Sugestão documental original: {campo.valor_original}</p>}{encontrado && campo.fonte_nome ? <><p className="origem-preenchimento"><ShieldCheck size={13} />{campo.fonte_nome}{campo.pagina ? ` · página ${campo.pagina}` : ""} · {Math.round(campo.confianca * 100)}%</p>{campo.trecho && <blockquote>“{campo.trecho}”</blockquote>}</> : <><p className="justificativa-campo">{campo.justificativa}</p><p className="contexto-campo">{campo.contexto}</p></>}</div>
   </article>;
 }

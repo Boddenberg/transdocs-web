@@ -76,6 +76,7 @@
 .numeros-preenchimento .positivo { color: #2f8064; background: #f0f8f4; }
 .numeros-preenchimento .pendente { color: #9b6c29; background: #fcf7ec; }
 .alertas-preenchimento { padding: 12px 15px; border: 1px solid rgba(167,115,45,.16); border-radius: 13px; color: #84652f; background: #fcf8ee; }
+.alertas-preenchimento > strong { margin-bottom: 7px; display: flex; align-items: center; gap: 7px; color: #765725; font-size: .63rem; }
 .alertas-preenchimento p { margin: 0; display: flex; gap: 7px; font-size: .64rem; line-height: 1.45; }
 .alertas-preenchimento p + p { margin-top: 7px; }
 .campos-preenchimento { overflow: hidden; }
@@ -100,6 +101,7 @@
 .etiqueta-campo--encontrado { color: #2c7458; background: #e8f5ee; }
 .etiqueta-campo--ausente, .etiqueta-campo--ambiguo { color: #936a2d; background: #fbf3e3; }
 .etiqueta-campo--manual { color: #355f8a; background: #eaf2fb; }
+.numero-lacuna { color: #687d74; font-size: .54rem; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
 .campo-mapeado code { padding: 3px 6px; overflow: hidden; text-overflow: ellipsis; color: #798b83; background: #f1f5f3; font-size: .55rem; }
 .campo-mapeado h3 { margin: 9px 0 7px; color: #53685e; font-size: .66rem; font-weight: 650; line-height: 1.35; }
 .edicao-valor-campo { display: grid; gap: 6px; }
