@@ -160,6 +160,7 @@ export const api = {
 
 export async function enviarDocumento(
   arquivo: File,
+  opcoes: { somentePrimeiraPagina?: boolean },
   aoProgredir: (percentual: number) => void,
   sinal?: AbortSignal
 ): Promise<Documento> {
@@ -196,6 +197,10 @@ export async function enviarDocumento(
     sinal?.addEventListener("abort", () => xhr.abort(), { once: true });
     const formulario = new FormData();
     formulario.append("arquivo", arquivo);
+    formulario.append(
+      "somente_primeira_pagina",
+      String(Boolean(opcoes.somentePrimeiraPagina))
+    );
     xhr.send(formulario);
   });
 }

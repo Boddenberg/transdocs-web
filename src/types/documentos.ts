@@ -45,6 +45,23 @@ export interface ExtracaoDocumento {
   atualizado_em: string;
 }
 
+export interface DadoPrincipalDocumento {
+  rotulo: string;
+  valor: string;
+}
+
+export interface AnaliseDocumento {
+  tokens_entrada: number;
+  tokens_saida: number;
+  tokens_total: number;
+  custo_estimado_usd: number;
+  custo_estimado_brl: number;
+  cotacao_usd_brl: number;
+  modelo_ia: string | null;
+  estrategia: string | null;
+  concluido_em: string | null;
+}
+
 export interface Documento {
   id: string;
   usuario_id: string;
@@ -54,12 +71,16 @@ export interface Documento {
   tipo_arquivo: "pdf" | "imagem";
   tamanho_bytes: number;
   total_paginas: number | null;
+  somente_primeira_pagina: boolean;
   status: StatusDocumento;
   revisado: boolean;
   codigo_erro: string | null;
   criado_em: string;
   atualizado_em: string;
   ultima_alteracao_em: string;
+  tipo_documento?: string | null;
+  dados_principais?: DadoPrincipalDocumento[];
+  analise?: AnaliseDocumento | null;
 }
 
 export interface DocumentoDetalhe extends Documento {
