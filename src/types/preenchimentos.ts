@@ -118,6 +118,10 @@ export interface ArquivoPreenchimento {
   expira_em_segundos: number;
 }
 
+export interface TranscricaoAudio {
+  texto: string;
+}
+
 export interface FonteSelecionada {
   categoria: string;
   arquivo: File;

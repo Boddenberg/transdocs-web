@@ -13,6 +13,7 @@ import type {
   ArquivoPreenchimento,
   FonteSelecionada,
   Preenchimento,
+  TranscricaoAudio,
   TipoPreenchimento
 } from "@/types/preenchimentos";
 
@@ -233,6 +234,37 @@ export async function adicionarFontesPreenchimento(
     repetirAposRefresh,
     () => adicionarFontesPreenchimento(id, fontes, true)
   );
+}
+
+export async function transcreverAudioPreenchimento(
+  arquivo: File,
+  repetirAposRefresh = false
+): Promise<TranscricaoAudio> {
+  const formulario = new FormData();
+  formulario.append("arquivo", arquivo);
+  const token = await obterToken();
+  let resposta: Response;
+  try {
+    resposta = await fetch(
+      `${configuracao.apiUrl}/api/v1/preenchimentos/transcrever-audio`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: formulario
+      }
+    );
+  } catch {
+    throw new ErroApi("Não foi possível enviar o áudio para transcrição.", 0);
+  }
+  if (resposta.status === 401 && !repetirAposRefresh) {
+    const renovado = await renovarToken();
+    if (renovado) return transcreverAudioPreenchimento(arquivo, true);
+  }
+  if (!resposta.ok) throw await criarErro(resposta);
+  return resposta.json() as Promise<TranscricaoAudio>;
 }
 
 async function enviarFormularioPreenchimento(

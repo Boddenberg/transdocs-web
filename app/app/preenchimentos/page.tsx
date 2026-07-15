@@ -8,25 +8,30 @@ import {
   Clock3,
   Download,
   FileArchive,
+  FileAudio2,
   FileCheck2,
   FilePenLine,
   FilePlus2,
   FileText,
   Loader2,
   MessageSquareText,
+  Mic,
+  ImagePlus,
   Plus,
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  Square,
   UploadCloud,
   X
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   adicionarFontesPreenchimento,
   api,
-  criarPreenchimento
+  criarPreenchimento,
+  transcreverAudioPreenchimento
 } from "@/lib/api";
 import { formatarTamanho } from "@/lib/formatadores";
 import type {
@@ -161,6 +166,26 @@ export default function PaginaPreenchimentos() {
 
   function atualizarCategoria(categoria: string, arquivos: File[]) {
     setFontes((atuais) => ({ ...atuais, [categoria]: arquivos }));
+  }
+
+  function atualizarFotosPrompt(fotos: File[]) {
+    setFontes((atuais) => {
+      const outrosArquivos = (atuais.documentos_caso || []).filter(
+        (arquivo) => !arquivo.type.startsWith("image/")
+      );
+      return { ...atuais, documentos_caso: [...outrosArquivos, ...fotos] };
+    });
+  }
+
+  function adicionarTranscricao(texto: string) {
+    const atual = instrucoesNegociacao.trim();
+    const proximo = atual ? `${atual}\n\n${texto.trim()}` : texto.trim();
+    if (proximo.length > 8000) {
+      setErro("A declaração ultrapassaria 8.000 caracteres. Resuma o texto antes de adicionar outro áudio.");
+      return;
+    }
+    setInstrucoesNegociacao(proximo);
+    setErro(null);
   }
 
   async function iniciar() {
@@ -326,6 +351,10 @@ export default function PaginaPreenchimentos() {
               aoMudarBase={setArquivoBase}
               instrucoesNegociacao={instrucoesNegociacao}
               aoMudarInstrucoes={setInstrucoesNegociacao}
+              fotosPrompt={(fontes.documentos_caso || []).filter((arquivo) => arquivo.type.startsWith("image/"))}
+              aoMudarFotosPrompt={atualizarFotosPrompt}
+              aoAdicionarTranscricao={adicionarTranscricao}
+              aoErro={setErro}
               fontes={fontes}
               aoMudarCategoria={atualizarCategoria}
               enviando={enviando}
@@ -380,6 +409,10 @@ function ConfiguracaoPreenchimento({
   aoMudarBase,
   instrucoesNegociacao,
   aoMudarInstrucoes,
+  fotosPrompt,
+  aoMudarFotosPrompt,
+  aoAdicionarTranscricao,
+  aoErro,
   fontes,
   aoMudarCategoria,
   enviando,
@@ -393,11 +426,16 @@ function ConfiguracaoPreenchimento({
   aoMudarBase(arquivo: File | null): void;
   instrucoesNegociacao: string;
   aoMudarInstrucoes(valor: string): void;
+  fotosPrompt: File[];
+  aoMudarFotosPrompt(arquivos: File[]): void;
+  aoAdicionarTranscricao(texto: string): void;
+  aoErro(mensagem: string | null): void;
   fontes: Record<string, File[]>;
   aoMudarCategoria(categoria: string, arquivos: File[]): void;
   enviando: boolean;
   aoIniciar(): void;
 }) {
+  const [entradaOcupada, setEntradaOcupada] = useState(false);
   return (
     <>
       <section className="etapa-preenchimento">
@@ -412,18 +450,16 @@ function ConfiguracaoPreenchimento({
       </section>
 
       <section className="etapa-preenchimento">
-        <header><span>02</span><div><p className="rotulo">Informações da negociação</p><h2>Conte quem participa e como será o negócio</h2><p>Use nomes completos para indicar vendedores, compradores, preço, pagamento e condições. Não repita dados pessoais que já estão nos documentos.</p></div></header>
-        <label className="narrativa-negociacao">
-          <span><MessageSquareText size={18} /> Declaração do caso <small>opcional</small></span>
-          <textarea
-            value={instrucoesNegociacao}
-            onChange={(evento) => aoMudarInstrucoes(evento.target.value)}
-            placeholder="Ex.: João da Silva e Maria da Silva são casados e vendedores. Ana Souza e Carlos Souza são os compradores. O preço é de R$ 500.000,00, pago por transferência na assinatura."
-            maxLength={8000}
-            rows={5}
-          />
-          <small>{instrucoesNegociacao.length}/8.000 caracteres · a IA tratará este texto como fatos declarados, nunca como autorização para inferir dados</small>
-        </label>
+        <header><span>02</span><div><p className="rotulo">Prompt do preenchimento</p><h2>Escreva, fale ou mostre o que precisa</h2><p>Explique quem vende, quem compra, preço, pagamento e condições. Áudios viram texto para sua revisão; fotos entram como evidência do caso.</p></div></header>
+        <EntradaNegociacao
+          valor={instrucoesNegociacao}
+          aoMudar={aoMudarInstrucoes}
+          fotos={fotosPrompt}
+          aoMudarFotos={aoMudarFotosPrompt}
+          aoAdicionarTranscricao={aoAdicionarTranscricao}
+          aoErro={aoErro}
+          aoMudarOcupado={setEntradaOcupada}
+        />
       </section>
 
       <section className="etapa-preenchimento">
@@ -442,10 +478,116 @@ function ConfiguracaoPreenchimento({
 
       <footer className="acoes-inicio-preenchimento">
         <span><ShieldCheck size={16} /> Papéis declarados orientam a montagem; dados pessoais continuam exigindo fonte.</span>
-        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!arquivoBase || enviando}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : <><Sparkles size={16} /> Analisar e montar</>}</button>
+        <button className="botao botao--primario" type="button" onClick={aoIniciar} disabled={!arquivoBase || enviando || entradaOcupada}>{enviando ? <><Loader2 size={16} className="girando" /> Enviando…</> : entradaOcupada ? <><Loader2 size={16} className="girando" /> Finalizando entrada…</> : <><Sparkles size={16} /> Analisar e montar</>}</button>
       </footer>
     </>
   );
+}
+
+function EntradaNegociacao({ valor, aoMudar, fotos, aoMudarFotos, aoAdicionarTranscricao, aoErro, aoMudarOcupado }: { valor: string; aoMudar(valor: string): void; fotos: File[]; aoMudarFotos(arquivos: File[]): void; aoAdicionarTranscricao(texto: string): void; aoErro(mensagem: string | null): void; aoMudarOcupado(ocupado: boolean): void }) {
+  const [gravando, setGravando] = useState(false);
+  const [transcrevendo, setTranscrevendo] = useState(false);
+  const gravadorRef = useRef<MediaRecorder | null>(null);
+  const fluxoRef = useRef<MediaStream | null>(null);
+  const partesRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    aoMudarOcupado(gravando || transcrevendo);
+  }, [aoMudarOcupado, gravando, transcrevendo]);
+
+  useEffect(() => () => {
+    if (gravadorRef.current?.state === "recording") {
+      gravadorRef.current.onstop = null;
+      gravadorRef.current.stop();
+    }
+    fluxoRef.current?.getTracks().forEach((trilha) => trilha.stop());
+  }, []);
+
+  async function processarAudio(arquivo: File) {
+    if (arquivo.size > 25 * 1024 * 1024) {
+      aoErro("O áudio deve ter no máximo 25 MB.");
+      return;
+    }
+    setTranscrevendo(true);
+    aoErro(null);
+    try {
+      const resposta = await transcreverAudioPreenchimento(arquivo);
+      aoAdicionarTranscricao(resposta.texto);
+    } catch (falha) {
+      aoErro(falha instanceof Error ? falha.message : "Não foi possível transcrever o áudio.");
+    } finally {
+      setTranscrevendo(false);
+    }
+  }
+
+  async function iniciarGravacao() {
+    if (!("MediaRecorder" in window) || !navigator.mediaDevices?.getUserMedia) {
+      aoErro("Este navegador não oferece gravação de áudio. Use a opção Enviar áudio.");
+      return;
+    }
+    try {
+      const fluxo = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const tipoPreferido = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
+      const gravador = new MediaRecorder(
+        fluxo,
+        tipoPreferido ? { mimeType: tipoPreferido } : undefined
+      );
+      fluxoRef.current = fluxo;
+      gravadorRef.current = gravador;
+      partesRef.current = [];
+      gravador.ondataavailable = (evento) => {
+        if (evento.data.size) partesRef.current.push(evento.data);
+      };
+      gravador.onstop = () => {
+        fluxo.getTracks().forEach((trilha) => trilha.stop());
+        fluxoRef.current = null;
+        setGravando(false);
+        const tipo = gravador.mimeType || "audio/webm";
+        const extensao = tipo.includes("mp4") ? "mp4" : "webm";
+        const arquivo = new File(
+          [new Blob(partesRef.current, { type: tipo })],
+          `relato-negociacao-${Date.now()}.${extensao}`,
+          { type: tipo }
+        );
+        if (arquivo.size) void processarAudio(arquivo);
+        else aoErro("A gravação ficou vazia. Tente novamente.");
+      };
+      gravador.start();
+      setGravando(true);
+      aoErro(null);
+    } catch {
+      aoErro("Não foi possível acessar o microfone. Autorize o acesso ou envie um áudio pronto.");
+    }
+  }
+
+  function pararGravacao() {
+    if (gravadorRef.current?.state === "recording") gravadorRef.current.stop();
+  }
+
+  return <div className="entrada-negociacao">
+    <label className="narrativa-negociacao">
+      <span><MessageSquareText size={18} /> Prompt do caso <small>editável</small></span>
+      <textarea
+        value={valor}
+        onChange={(evento) => aoMudar(evento.target.value)}
+        placeholder="Ex.: João da Silva e Maria da Silva são casados e vendedores. Ana Souza e Carlos Souza são os compradores. O preço é de R$ 500.000,00, pago por transferência na assinatura."
+        maxLength={8000}
+        rows={5}
+      />
+      <small>{valor.length}/8.000 caracteres · confira nomes, valores e condições, inclusive quando vierem de áudio</small>
+    </label>
+    <div className="acoes-entrada-negociacao">
+      <button type="button" onClick={gravando ? pararGravacao : iniciarGravacao} disabled={transcrevendo} className={gravando ? "gravando" : ""}>{gravando ? <><Square size={15} /> Parar gravação</> : <><Mic size={16} /> Gravar áudio</>}</button>
+      <label className={transcrevendo ? "desabilitado" : ""}><input type="file" hidden disabled={transcrevendo || gravando} accept=".flac,.mp3,.mp4,.mpeg,.mpga,.m4a,.ogg,.wav,.webm,.aac,audio/*" onChange={(evento) => { const arquivo = evento.target.files?.[0]; if (arquivo) void processarAudio(arquivo); evento.target.value = ""; }} /><FileAudio2 size={16} /> Enviar áudio</label>
+      <label><input type="file" hidden multiple accept="image/jpeg,image/png,image/webp" capture="environment" onChange={(evento) => { aoMudarFotos([...fotos, ...Array.from(evento.target.files || [])]); evento.target.value = ""; }} /><ImagePlus size={16} /> Adicionar foto</label>
+      {transcrevendo && <span className="estado-entrada"><Loader2 size={14} className="girando" /> Transcrevendo para revisão…</span>}
+      {gravando && <span className="estado-entrada estado-entrada--gravando"><i /> Ouvindo… fale naturalmente</span>}
+    </div>
+    {fotos.length > 0 && <div className="fotos-prompt">{fotos.map((foto, indice) => <span key={`${foto.name}-${foto.lastModified}-${indice}`}><ImagePlus size={13} /><em>{foto.name}</em><button type="button" onClick={() => aoMudarFotos(fotos.filter((_, atual) => atual !== indice))} aria-label={`Remover ${foto.name}`}><X size={12} /></button></span>)}</div>}
+    <p className="regra-entrada"><ShieldCheck size={14} /> Áudio vira texto e precisa ser revisado. Foto é evidência visual. Nenhum dos dois autoriza a IA a inventar dados.</p>
+  </div>;
 }
 
 function GradeFontes({ tipo, fontes, aoMudar }: { tipo: TipoPreenchimento; fontes: Record<string, File[]>; aoMudar(categoria: string, arquivos: File[]): void }) {
