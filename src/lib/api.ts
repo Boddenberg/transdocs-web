@@ -175,7 +175,12 @@ export async function enviarDocumento(
     xhr.onerror = () => rejeitar(new ErroApi("Não foi possível enviar o documento.", 0));
     xhr.onabort = () => rejeitar(new DOMException("Envio cancelado", "AbortError"));
     xhr.onload = () => {
-      const dados = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      let dados: unknown = {};
+      try {
+        dados = xhr.responseText ? JSON.parse(xhr.responseText) : {};
+      } catch {
+        dados = {};
+      }
       if (xhr.status >= 200 && xhr.status < 300) resolver(dados as Documento);
       else {
         const erro = dados as ErroBackend;
@@ -194,4 +199,3 @@ export async function enviarDocumento(
     xhr.send(formulario);
   });
 }
-

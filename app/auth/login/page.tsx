@@ -61,11 +61,12 @@ export default function Login() {
             />
           </span>
         </label>
-        <label className="campo">
-          <span>Senha</span>
+        <div className="campo">
+          <label htmlFor="senha-login">Senha</label>
           <span className="campo__controle">
             <LockKeyhole size={18} />
             <input
+              id="senha-login"
               type={mostrar ? "text" : "password"}
               autoComplete="current-password"
               value={senha}
@@ -83,7 +84,7 @@ export default function Login() {
               {mostrar ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </span>
-        </label>
+        </div>
         <div className="form-auth__apoio">
           <span />
           <Link href="/auth/recuperar">Esqueci minha senha</Link>
@@ -100,4 +101,3 @@ export default function Login() {
     </>
   );
 }
-
