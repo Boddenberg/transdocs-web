@@ -38,10 +38,9 @@ export function CenaAuth({ children }: { children: ReactNode }) {
       <section className="auth__painel">
         <div className="auth__formulario">{children}</div>
         <p className="auth__nota">
-          O TransDocs auxilia a leitura. A validação final permanece sempre com você.
+          O ThiagoDocs auxilia a leitura. A validação final permanece sempre com você.
         </p>
       </section>
     </main>
   );
 }
-

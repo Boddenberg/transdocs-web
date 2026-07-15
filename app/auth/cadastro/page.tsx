@@ -64,7 +64,7 @@ export default function Cadastro() {
           <span className="confirmacao-email__icone"><MailCheck size={28} /></span>
           <p>Enviamos um link de confirmação para:</p>
           <strong>{email}</strong>
-          <p>Abra o e-mail e clique em <b>Confirmar meu e-mail</b>. Depois, você será levado ao TransDocs.</p>
+          <p>Abra o e-mail e clique em <b>Confirmar meu e-mail</b>. Depois, você será levado ao ThiagoDocs.</p>
           {erro && <div className="aviso aviso--erro" role="alert">{erro}</div>}
           {sucesso && <div className="aviso aviso--sucesso" role="status">{sucesso}</div>}
           <button

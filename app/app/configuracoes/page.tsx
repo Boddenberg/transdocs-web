@@ -54,7 +54,7 @@ export default function Configuracoes() {
           <header><span><Database size={19} /></span><div><h2>Retenção e exclusão</h2><p>Na primeira versão, os documentos permanecem até você excluí-los. A exclusão remove arquivo, extração, correções e histórico técnico associado.</p></div></header>
         </section>
         <section className="cartao-config cartao-config--sessao">
-          <div><LogOut size={18} /><span><strong>Encerrar sessão</strong><small>Saia deste navegador com segurança.</small></span></div><button className="botao botao--secundario" onClick={sair}>Sair do TransDocs</button>
+          <div><LogOut size={18} /><span><strong>Encerrar sessão</strong><small>Saia deste navegador com segurança.</small></span></div><button className="botao botao--secundario" onClick={sair}>Sair do ThiagoDocs</button>
         </section>
       </div>
     </main>

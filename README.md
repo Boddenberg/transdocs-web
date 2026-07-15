@@ -1,4 +1,4 @@
-# TransDocs Web
+# ThiagoDocs Web
 
 Aplicação Next.js para envio, leitura assistida e conferência humana de documentos.
 O front é independente da Padoka e se comunica somente com a API `transdocs` e com um

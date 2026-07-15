@@ -66,7 +66,7 @@ async function executar<T>(caminho: string, opcoes: Opcoes): Promise<T> {
     });
   } catch (erro) {
     if (erro instanceof Error && erro.name === "AbortError") throw erro;
-    throw new ErroApi("Não foi possível conectar ao TransDocs.", 0);
+    throw new ErroApi("Não foi possível conectar ao ThiagoDocs.", 0);
   }
 
   if (resposta.status === 401 && !opcoes.repetirAposRefresh) {
@@ -109,7 +109,7 @@ async function criarErro(resposta: Response): Promise<ErroApi> {
       : resposta.status === 403
         ? "Você não tem permissão para esta ação."
         : resposta.status >= 500
-          ? "O TransDocs está temporariamente indisponível."
+          ? "O ThiagoDocs está temporariamente indisponível."
           : "Não foi possível concluir a operação.");
   return new ErroApi(mensagem, resposta.status, dados.erro?.codigo);
 }
