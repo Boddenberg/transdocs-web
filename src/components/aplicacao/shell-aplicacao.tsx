@@ -1,11 +1,12 @@
 "use client";
 
-import { Archive, ChevronDown, LogOut, ScanLine, Settings2 } from "lucide-react";
+import { Archive, ChevronDown, LogOut, MessageSquarePlus, ScanLine, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+import { ModalSugestao } from "@/components/aplicacao/modal-sugestao";
 import { Marca } from "@/components/marca";
 import { useAutenticacao } from "@/contexts/autenticacao";
 
@@ -18,6 +19,7 @@ const navegacao = [
 export function ShellAplicacao({ children }: { children: ReactNode }) {
   const { usuario, carregando, sair } = useAutenticacao();
   const [menuAberto, setMenuAberto] = useState(false);
+  const [sugestaoAberta, setSugestaoAberta] = useState(false);
   const caminho = usePathname();
   const router = useRouter();
 
@@ -55,23 +57,26 @@ export function ShellAplicacao({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="conta-app">
-          <button className="conta-app__botao" onClick={() => setMenuAberto((v) => !v)} aria-expanded={menuAberto}>
-            <span className="avatar">{nome.slice(0, 1).toUpperCase()}</span>
-            <span className="conta-app__texto"><strong>{nome}</strong><small>Sessão protegida</small></span>
-            <ChevronDown size={15} />
-          </button>
-          {menuAberto && (
-            <div className="conta-app__menu">
-              <Link href="/app/configuracoes" onClick={() => setMenuAberto(false)}><Settings2 size={16} /> Configurações</Link>
-              <button onClick={encerrar}><LogOut size={16} /> Sair</button>
-            </div>
-          )}
+        <div className="acoes-barra-app">
+          <button className="botao-sugestao-topo" type="button" onClick={() => setSugestaoAberta(true)}><MessageSquarePlus size={16} /><span>Sugestões</span></button>
+          <div className="conta-app">
+            <button className="conta-app__botao" onClick={() => setMenuAberto((v) => !v)} aria-expanded={menuAberto}>
+              <span className="avatar">{nome.slice(0, 1).toUpperCase()}</span>
+              <span className="conta-app__texto"><strong>{nome}</strong><small>Sessão protegida</small></span>
+              <ChevronDown size={15} />
+            </button>
+            {menuAberto && (
+              <div className="conta-app__menu">
+                <Link href="/app/configuracoes" onClick={() => setMenuAberto(false)}><Settings2 size={16} /> Configurações</Link>
+                <button onClick={encerrar}><LogOut size={16} /> Sair</button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       <div className="aviso-humano"><span /> IA para leitura, conferência sempre humana.</div>
       <div className="conteudo-app">{children}</div>
+      <ModalSugestao aberto={sugestaoAberta} aoFechar={() => setSugestaoAberta(false)} />
     </div>
   );
 }
-

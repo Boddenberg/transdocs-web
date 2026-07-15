@@ -8,6 +8,7 @@ import type {
   StatusDocumento,
   UrlDocumento
 } from "@/types/documentos";
+import type { NovaSugestao, SugestaoCriada } from "@/types/sugestoes";
 
 type Metodo = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -203,4 +204,37 @@ export async function enviarDocumento(
     );
     xhr.send(formulario);
   });
+}
+
+export async function enviarSugestao(
+  dados: NovaSugestao,
+  repetirAposRefresh = false
+): Promise<SugestaoCriada> {
+  const formulario = new FormData();
+  formulario.append("categoria", dados.categoria);
+  formulario.append("mensagem", dados.mensagem);
+  if (dados.paginaOrigem) formulario.append("pagina_origem", dados.paginaOrigem);
+  dados.anexos.forEach((anexo) => formulario.append("anexos", anexo));
+
+  const token = await obterToken();
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${configuracao.apiUrl}/api/v1/sugestoes`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: formulario
+    });
+  } catch {
+    throw new ErroApi("Não foi possível enviar sua mensagem agora.", 0);
+  }
+
+  if (resposta.status === 401 && !repetirAposRefresh) {
+    const renovado = await renovarToken();
+    if (renovado) return enviarSugestao(dados, true);
+  }
+  if (!resposta.ok) throw await criarErro(resposta);
+  return resposta.json() as Promise<SugestaoCriada>;
 }

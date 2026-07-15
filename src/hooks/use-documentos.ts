@@ -9,6 +9,7 @@ interface Filtros {
   busca?: string;
   status?: StatusDocumento;
   limite?: number;
+  atualizarEnquantoProcessa?: boolean;
 }
 
 export function useDocumentos(filtros: Filtros = {}) {
@@ -19,18 +20,29 @@ export function useDocumentos(filtros: Filtros = {}) {
   const busca = filtros.busca;
   const status = filtros.status;
   const limite = filtros.limite;
+  const atualizarEnquantoProcessa = filtros.atualizarEnquantoProcessa;
 
   const recarregar = useCallback(() => setVersao((atual) => atual + 1), []);
 
   useEffect(() => {
     const controlador = new AbortController();
+    let temporizador: number | undefined;
     const inicio = window.setTimeout(() => {
       setCarregando(true);
       setErro(null);
     }, 0);
     api.documentos
       .listar({ busca, status, limite }, controlador.signal)
-      .then(setDocumentos)
+      .then((dados) => {
+        setDocumentos(dados);
+        if (
+          atualizarEnquantoProcessa &&
+          dados.some((documento) => documento.status === "pendente" || documento.status === "processando")
+        ) {
+          const intervalo = document.visibilityState === "visible" ? 3000 : 12000;
+          temporizador = window.setTimeout(recarregar, intervalo);
+        }
+      })
       .catch((falha) => {
         if (falha instanceof Error && falha.name === "AbortError") return;
         setErro(falha instanceof Error ? falha.message : "Não foi possível carregar.");
@@ -38,9 +50,10 @@ export function useDocumentos(filtros: Filtros = {}) {
       .finally(() => setCarregando(false));
     return () => {
       window.clearTimeout(inicio);
+      if (temporizador) window.clearTimeout(temporizador);
       controlador.abort();
     };
-  }, [busca, limite, status, versao]);
+  }, [atualizarEnquantoProcessa, busca, limite, recarregar, status, versao]);
 
   return { documentos, carregando, erro, recarregar };
 }
