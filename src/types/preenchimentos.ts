@@ -11,6 +11,32 @@ export type StatusPreenchimento =
 export type StatusCampoPreenchimento = "encontrado" | "ausente" | "ambiguo";
 export type ModoPreenchimento = "literal" | "composto";
 export type ModoCriacaoPreenchimento = "documento_completo" | "completar_minuta";
+export type SituacaoAtoRegistral = "ativo" | "cancelado" | "historico" | "incerto";
+export type MeioPagamento =
+  | "transferencia"
+  | "pix"
+  | "cheque_administrativo"
+  | "financiamento"
+  | "sinal"
+  | "parcelamento"
+  | "outro";
+
+export interface ComponentePagamento {
+  meio: MeioPagamento;
+  valor: string;
+  descricao: string;
+  vencimento: string;
+  favorecido: string;
+}
+
+export interface DadosNegociacao {
+  preco_total: string;
+  moeda: "BRL";
+  componentes: ComponentePagamento[];
+  imissao_posse: string;
+  clausulas_adicionais: string;
+  observacoes: string;
+}
 
 export interface ModeloPreenchimento {
   id: string;
@@ -84,9 +110,60 @@ export interface CampoPreenchimento {
   localizador: LocalizadorCampoDocx;
 }
 
+export interface EvidenciaAnaliseImovel {
+  fonte_id: string;
+  fonte_nome: string;
+  categoria_fonte: string;
+  pagina: number | null;
+  trecho: string;
+}
+
+export interface DadoAnaliseImovel {
+  tipo: string;
+  valor: string;
+  confianca: number;
+  precisa_revisao: boolean;
+  evidencia: EvidenciaAnaliseImovel;
+}
+
+export interface AtoRegistral {
+  ordem: number;
+  identificador: string;
+  data: string | null;
+  natureza: "abertura" | "aquisicao" | "onus" | "cancelamento" | "averbacao" | "outro";
+  resumo: string;
+  titulares: string[];
+  valor: string | null;
+  referencia_cancelamento: string | null;
+  situacao: SituacaoAtoRegistral;
+  evidencia: EvidenciaAnaliseImovel;
+}
+
+export interface OnusRestricao {
+  tipo: string;
+  ato: string;
+  resumo: string;
+  situacao: SituacaoAtoRegistral;
+  cancelado_por: string | null;
+  evidencia: EvidenciaAnaliseImovel;
+}
+
+export interface AnaliseImovel {
+  identificacao: DadoAnaliseImovel[];
+  descricao: DadoAnaliseImovel[];
+  proprietarios_atuais: DadoAnaliseImovel[];
+  forma_aquisicao: DadoAnaliseImovel[];
+  valor_venal: DadoAnaliseImovel[];
+  atos_registrais: AtoRegistral[];
+  onus_restricoes: OnusRestricao[];
+  divergencias: string[];
+  alertas: string[];
+}
+
 export interface ResultadoPreenchimento {
   tipo_documento: string;
   campos: CampoPreenchimento[];
+  analise_imovel: AnaliseImovel;
   alertas: string[];
   total_campos: number;
   total_encontrados: number;
@@ -113,6 +190,7 @@ export interface Preenchimento {
   hash_minuta: string;
   tamanho_minuta_bytes: number;
   instrucoes_negociacao?: string;
+  dados_negociacao?: DadosNegociacao | null;
   modo_criacao?: ModoCriacaoPreenchimento;
   modelo_referencia?: string | null;
   modelo_nome?: string | null;

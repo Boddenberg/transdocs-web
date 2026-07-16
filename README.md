@@ -25,6 +25,11 @@ Fluxos implementados:
 - progresso e cancelamento do upload;
 - histórico com pesquisa por arquivo ou qualquer dado extraído, filtros e exclusão permanente;
 - preenchimento de minuta DOCX por tipo, com fontes opcionais organizadas por categoria;
+- assistente em seis etapas: vendedores, compradores, imóvel, negociação, revisão e minuta;
+- escolha automática do modelo padrão no fluxo comum, com uma decisão principal por tela;
+- preço estruturado, múltiplos meios de pagamento e conferência da soma antes do envio;
+- cadeia registral, proprietário provável, aquisição, valor venal e ônus separados por estado;
+- confirmação humana obrigatória antes da geração do Word;
 - mapa de lacunas com valor, fonte, trecho, confiança e seleção explícita antes da geração;
 - retomada de casos salvos, reenvio de documentos faltantes e download parcial ou completo;
 - ficha resumida de alta densidade com cópia individual, com títulos ou somente valores, além da conferência detalhada;
@@ -113,6 +118,10 @@ só são pré-selecionados quando a evidência literal passa na validação do s
 visuais permanecem desmarcadas para conferência humana. A revisão oferece seleção em lote,
 edição dos valores sugeridos e preenchimento manual de lacunas ainda sem fonte; ajustes são
 enviados ao servidor somente quando o campo correspondente está selecionado.
+
+O assistente salva localmente os textos ainda não enviados e permite retomar casos processados
+pelo histórico da conta. Arquivos precisam ser selecionados novamente se a página for recarregada
+antes do primeiro envio; depois do envio, o caso permanece salvo no servidor.
 
 ## Deploy no Railway
 

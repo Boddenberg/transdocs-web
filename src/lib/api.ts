@@ -11,6 +11,7 @@ import type {
 import type { NovaSugestao, SugestaoCriada } from "@/types/sugestoes";
 import type {
   ArquivoPreenchimento,
+  DadosNegociacao,
   FonteSelecionada,
   ModeloPreenchimento,
   Preenchimento,
@@ -182,14 +183,16 @@ export const api = {
       id: string,
       camposIncluir: string[],
       valoresCampos: Record<string, string>,
-      permitirIncompleto: boolean
+      permitirIncompleto: boolean,
+      revisaoConfirmada: boolean
     ) =>
       requisitar<Preenchimento>(`/api/v1/preenchimentos/${id}/gerar`, {
         metodo: "POST",
         corpo: {
           campos_incluir: camposIncluir,
           valores_campos: valoresCampos,
-          permitir_incompleto: permitirIncompleto
+          permitir_incompleto: permitirIncompleto,
+          revisao_confirmada: revisaoConfirmada
         }
       }),
     arquivo: (id: string) =>
@@ -202,6 +205,7 @@ export async function criarPreenchimento(
   arquivoBase: File | null,
   modeloId: string | null,
   instrucoesNegociacao: string,
+  dadosNegociacao: DadosNegociacao | null,
   fontes: FonteSelecionada[],
   repetirAposRefresh = false
 ): Promise<Preenchimento> {
@@ -210,6 +214,9 @@ export async function criarPreenchimento(
   if (arquivoBase) formulario.append("arquivo_base", arquivoBase);
   if (modeloId) formulario.append("modelo_id", modeloId);
   formulario.append("instrucoes_negociacao", instrucoesNegociacao);
+  if (dadosNegociacao) {
+    formulario.append("dados_negociacao", JSON.stringify(dadosNegociacao));
+  }
   fontes.forEach((fonte) => {
     formulario.append("categorias_fontes", fonte.categoria);
     formulario.append("arquivos_fontes", fonte.arquivo);
@@ -224,6 +231,7 @@ export async function criarPreenchimento(
         arquivoBase,
         modeloId,
         instrucoesNegociacao,
+        dadosNegociacao,
         fontes,
         true
       )
