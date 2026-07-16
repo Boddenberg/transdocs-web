@@ -13,6 +13,7 @@ import type {
   ArquivoPreenchimento,
   DadosNegociacao,
   FonteSelecionada,
+  FonteTextoSelecionada,
   ModeloPreenchimento,
   Preenchimento,
   TranscricaoAudio,
@@ -207,6 +208,7 @@ export async function criarPreenchimento(
   instrucoesNegociacao: string,
   dadosNegociacao: DadosNegociacao | null,
   fontes: FonteSelecionada[],
+  fontesTexto: FonteTextoSelecionada[],
   repetirAposRefresh = false
 ): Promise<Preenchimento> {
   const formulario = new FormData();
@@ -216,6 +218,9 @@ export async function criarPreenchimento(
   formulario.append("instrucoes_negociacao", instrucoesNegociacao);
   if (dadosNegociacao) {
     formulario.append("dados_negociacao", JSON.stringify(dadosNegociacao));
+  }
+  if (fontesTexto.length) {
+    formulario.append("fontes_texto", JSON.stringify(fontesTexto));
   }
   fontes.forEach((fonte) => {
     formulario.append("categorias_fontes", fonte.categoria);
@@ -233,6 +238,7 @@ export async function criarPreenchimento(
         instrucoesNegociacao,
         dadosNegociacao,
         fontes,
+        fontesTexto,
         true
       )
   );
@@ -325,7 +331,7 @@ async function enviarFormularioPreenchimento<T>(
       body: formulario
     });
   } catch {
-    throw new ErroApi("Não foi possível enviar os arquivos do preenchimento.", 0);
+    throw new ErroApi("Não foi possível enviar as informações da minuta.", 0);
   }
   if (resposta.status === 401 && !repetirAposRefresh) {
     const renovado = await renovarToken();

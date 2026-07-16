@@ -220,3 +220,9 @@ export interface FonteSelecionada {
   categoria: string;
   arquivo: File;
 }
+
+export interface FonteTextoSelecionada {
+  categoria: string;
+  nome: string;
+  texto: string;
+}

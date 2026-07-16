@@ -33,6 +33,7 @@ import type {
   DadosNegociacao,
   DadoAnaliseImovel,
   FonteSelecionada,
+  FonteTextoSelecionada,
   MeioPagamento,
   ModeloPreenchimento,
   OnusRestricao,
@@ -163,6 +164,8 @@ export function AssistenteEscritura() {
   const [valoresVenais, setValoresVenais] = useState<File[]>([]);
   const [observacoesVendedores, setObservacoesVendedores] = useState("");
   const [observacoesCompradores, setObservacoesCompradores] = useState("");
+  const [textoMatricula, setTextoMatricula] = useState("");
+  const [textoValorVenal, setTextoValorVenal] = useState("");
   const [negociacao, setNegociacao] = useState<DadosNegociacao>(novosDadosNegociacao);
   const [preenchimento, setPreenchimento] = useState<Preenchimento | null>(null);
   const [valoresEditados, setValoresEditados] = useState<Record<string, string>>({});
@@ -195,10 +198,14 @@ export function AssistenteEscritura() {
               negociacao?: DadosNegociacao;
               observacoesVendedores?: string;
               observacoesCompradores?: string;
+              textoMatricula?: string;
+              textoValorVenal?: string;
             };
             if (rascunho.negociacao) setNegociacao(rascunho.negociacao);
             setObservacoesVendedores(rascunho.observacoesVendedores || "");
             setObservacoesCompradores(rascunho.observacoesCompradores || "");
+            setTextoMatricula(rascunho.textoMatricula || "");
+            setTextoValorVenal(rascunho.textoValorVenal || "");
           }
         } catch {
           window.localStorage.removeItem(CHAVE_RASCUNHO);
@@ -231,9 +238,22 @@ export function AssistenteEscritura() {
     if (preenchimento) return;
     window.localStorage.setItem(
       CHAVE_RASCUNHO,
-      JSON.stringify({ negociacao, observacoesVendedores, observacoesCompradores })
+      JSON.stringify({
+        negociacao,
+        observacoesVendedores,
+        observacoesCompradores,
+        textoMatricula,
+        textoValorVenal
+      })
     );
-  }, [negociacao, observacoesVendedores, observacoesCompradores, preenchimento]);
+  }, [
+    negociacao,
+    observacoesVendedores,
+    observacoesCompradores,
+    preenchimento,
+    textoMatricula,
+    textoValorVenal
+  ]);
 
   useEffect(() => {
     if (!preenchimento || !["pendente", "processando"].includes(preenchimento.status)) return;
@@ -262,16 +282,16 @@ export function AssistenteEscritura() {
 
   function continuar() {
     setErro(null);
-    if (etapa === 1 && !vendedores.length) {
-      setErro("Adicione ao menos um documento dos vendedores para continuar.");
+    if (etapa === 1 && !vendedores.length && !observacoesVendedores.trim()) {
+      setErro("Adicione um documento ou escreva os dados dos vendedores para continuar.");
       return;
     }
-    if (etapa === 2 && !compradores.length) {
-      setErro("Adicione ao menos um documento dos compradores para continuar.");
+    if (etapa === 2 && !compradores.length && !observacoesCompradores.trim()) {
+      setErro("Adicione um documento ou escreva os dados dos compradores para continuar.");
       return;
     }
-    if (etapa === 3 && !matriculas.length) {
-      setErro("Adicione a matrícula do imóvel para continuar.");
+    if (etapa === 3 && !matriculas.length && !textoMatricula.trim()) {
+      setErro("Adicione a matrícula ou cole as informações dela para continuar.");
       return;
     }
     setEtapa((atual) => Math.min(4, atual + 1));
@@ -324,16 +344,32 @@ export function AssistenteEscritura() {
       ...matriculas.map((arquivo) => ({ categoria: "matricula_imovel", arquivo })),
       ...valoresVenais.map((arquivo) => ({ categoria: "valor_venal", arquivo }))
     ];
+    const fontesTexto: FonteTextoSelecionada[] = [
+      observacoesVendedores.trim() && {
+        categoria: "documentos_vendedores",
+        nome: "Dados dos vendedores informados por texto",
+        texto: observacoesVendedores.trim()
+      },
+      observacoesCompradores.trim() && {
+        categoria: "documentos_compradores",
+        nome: "Dados dos compradores informados por texto",
+        texto: observacoesCompradores.trim()
+      },
+      textoMatricula.trim() && {
+        categoria: "matricula_imovel",
+        nome: "Matrícula informada por texto",
+        texto: textoMatricula.trim()
+      },
+      textoValorVenal.trim() && {
+        categoria: "valor_venal",
+        nome: "Valor venal informado por texto",
+        texto: textoValorVenal.trim()
+      }
+    ].filter((fonte): fonte is FonteTextoSelecionada => Boolean(fonte));
     if (fontes.length > 20) {
       setErro("Este caso tem mais de 20 arquivos. Remova alguns documentos repetidos.");
       return;
     }
-    const observacoes = [
-      observacoesVendedores && `Vendedores: ${observacoesVendedores}`,
-      observacoesCompradores && `Compradores: ${observacoesCompradores}`
-    ]
-      .filter(Boolean)
-      .join("\n");
     setEnviando(true);
     setErro(null);
     try {
@@ -341,9 +377,10 @@ export function AssistenteEscritura() {
         tipo.id,
         null,
         modelo.id,
-        observacoes,
+        "",
         negociacao,
-        fontes
+        fontes,
+        fontesTexto
       );
       setHistorico((atuais) => [criado, ...atuais.filter((item) => item.id !== criado.id)]);
       abrirCaso(criado);
@@ -414,6 +451,8 @@ export function AssistenteEscritura() {
     setValoresVenais([]);
     setObservacoesVendedores("");
     setObservacoesCompradores("");
+    setTextoMatricula("");
+    setTextoValorVenal("");
     setNegociacao(novosDadosNegociacao());
     setPreenchimento(null);
     setValoresEditados({});
@@ -437,7 +476,7 @@ export function AssistenteEscritura() {
         <div>
           <p className="rotulo">Nova escritura de compra e venda</p>
           <h1>Vamos fazer uma etapa de cada vez.</h1>
-          <p>Você envia os documentos. O ThiagoDocs organiza. No final, você confere tudo antes de gerar a minuta.</p>
+          <p>Você envia os documentos ou cola o texto. O ThiagoDocs organiza. No final, você confere tudo antes de gerar a minuta.</p>
         </div>
         {historico.length > 0 && (
           <label className="retomar-caso">
@@ -477,24 +516,24 @@ export function AssistenteEscritura() {
           <EtapaPessoas
             numero="1"
             titulo="Quem está vendendo?"
-            descricao="Envie os documentos de todas as pessoas que vão vender o imóvel. Pode adicionar vários arquivos."
+            descricao="Adicione os documentos ou escreva os dados das pessoas que vão vender. Você também pode usar as duas formas."
             arquivos={vendedores}
             aoMudar={setVendedores}
             observacoes={observacoesVendedores}
             aoMudarObservacoes={setObservacoesVendedores}
-            exemplo="Ex.: há dois vendedores, são casados entre si ou existe uma procuração."
+            exemplo="Cole ou digite nomes, CPF, estado civil, profissão, endereço, representação e demais informações."
           />
         )}
         {etapa === 2 && (
           <EtapaPessoas
             numero="2"
             titulo="Quem está comprando?"
-            descricao="Agora envie os documentos de todas as pessoas que vão comprar o imóvel."
+            descricao="Adicione os documentos ou escreva os dados das pessoas que vão comprar."
             arquivos={compradores}
             aoMudar={setCompradores}
             observacoes={observacoesCompradores}
             aoMudarObservacoes={setObservacoesCompradores}
-            exemplo="Ex.: os compradores são casados entre si ou uma pessoa representa a empresa."
+            exemplo="Cole ou digite nomes, CPF, estado civil, profissão, endereço, representação e demais informações."
           />
         )}
         {etapa === 3 && (
@@ -503,6 +542,10 @@ export function AssistenteEscritura() {
             aoMudarMatriculas={setMatriculas}
             valoresVenais={valoresVenais}
             aoMudarValoresVenais={setValoresVenais}
+            textoMatricula={textoMatricula}
+            aoMudarTextoMatricula={setTextoMatricula}
+            textoValorVenal={textoValorVenal}
+            aoMudarTextoValorVenal={setTextoValorVenal}
           />
         )}
         {etapa === 4 && (
@@ -552,7 +595,7 @@ export function AssistenteEscritura() {
               <ArrowLeft size={20} /> Voltar
             </button>
             <button className="botao-grande" type="button" onClick={analisar} disabled={!pagamentoFecha || enviando}>
-              {enviando ? <><Loader2 className="girando" size={20} /> Enviando documentos…</> : <>Analisar documentos <ArrowRight size={20} /></>}
+              {enviando ? <><Loader2 className="girando" size={20} /> Organizando informações…</> : <>Analisar informações <ArrowRight size={20} /></>}
             </button>
           </footer>
         )}
@@ -598,25 +641,53 @@ function EtapaPessoas({ numero, titulo, descricao, arquivos, aoMudar, observacoe
   return (
     <>
       <CabecalhoEtapa numero={numero} titulo={titulo} descricao={descricao} />
-      <UploadSimples titulo="Adicionar documentos" arquivos={arquivos} aoMudar={aoMudar} />
-      <label className="campo-amplo">
-        <span>Há algo importante que a IA precisa saber? <em>Opcional</em></span>
-        <textarea value={observacoes} onChange={(evento) => aoMudarObservacoes(evento.target.value)} placeholder={exemplo} maxLength={2000} rows={3} />
-      </label>
+      <UploadSimples titulo="Adicionar documentos" subtitulo="Opcional se você preencher por texto" arquivos={arquivos} aoMudar={aoMudar} />
+      <SeparadorOu />
+      <EntradaTexto
+        titulo="Cole ou digite os dados aqui"
+        ajuda="Pode copiar de outro sistema ou escrever com suas palavras. Não precisa repetir o que já está nos arquivos."
+        valor={observacoes}
+        aoMudar={aoMudarObservacoes}
+        placeholder={exemplo}
+        limite={9000}
+      />
     </>
   );
 }
 
-function EtapaImovel({ matriculas, aoMudarMatriculas, valoresVenais, aoMudarValoresVenais }: { matriculas: File[]; aoMudarMatriculas(arquivos: File[]): void; valoresVenais: File[]; aoMudarValoresVenais(arquivos: File[]): void }) {
+function EtapaImovel({ matriculas, aoMudarMatriculas, valoresVenais, aoMudarValoresVenais, textoMatricula, aoMudarTextoMatricula, textoValorVenal, aoMudarTextoValorVenal }: { matriculas: File[]; aoMudarMatriculas(arquivos: File[]): void; valoresVenais: File[]; aoMudarValoresVenais(arquivos: File[]): void; textoMatricula: string; aoMudarTextoMatricula(valor: string): void; textoValorVenal: string; aoMudarTextoValorVenal(valor: string): void }) {
   return (
     <>
       <CabecalhoEtapa numero="3" titulo="Agora, os documentos do imóvel" descricao="A IA vai ler a matrícula inteira, organizar os registros e verificar quem aparece como proprietário atual." />
-      <div className="duas-colunas-upload">
-        <UploadSimples titulo="Matrícula do imóvel" subtitulo="Obrigatório · PDF ou foto" arquivos={matriculas} aoMudar={aoMudarMatriculas} />
-        <UploadSimples titulo="Valor venal ou IPTU" subtitulo="Opcional · ajuda a comparar cadastro e valor" arquivos={valoresVenais} aoMudar={aoMudarValoresVenais} />
+      <div className="duas-colunas-upload fontes-imovel">
+        <div>
+          <UploadSimples titulo="Matrícula do imóvel" subtitulo="PDF ou foto" arquivos={matriculas} aoMudar={aoMudarMatriculas} />
+          <SeparadorOu />
+          <EntradaTexto titulo="Cole o texto da matrícula" ajuda="Você pode colar a transcrição completa ou apenas os dados disponíveis." valor={textoMatricula} aoMudar={aoMudarTextoMatricula} placeholder="Cole aqui a descrição do imóvel, registros, averbações e demais atos." limite={12000} />
+        </div>
+        <div>
+          <UploadSimples titulo="Valor venal ou IPTU" subtitulo="Opcional · PDF ou foto" arquivos={valoresVenais} aoMudar={aoMudarValoresVenais} />
+          <SeparadorOu />
+          <EntradaTexto titulo="Digite o valor venal" ajuda="Opcional. Informe também o exercício e a inscrição municipal, se tiver." valor={textoValorVenal} aoMudar={aoMudarTextoValorVenal} placeholder="Ex.: exercício 2026, inscrição 000…, valor venal total R$ 350.000,00." limite={8000} />
+        </div>
       </div>
       <div className="explicacao-ia"><Building2 size={22} /><div><strong>O que será verificado</strong><p>Descrição do imóvel, titularidade, forma de aquisição, ônus, cancelamentos, inscrição municipal e possíveis divergências.</p></div></div>
     </>
+  );
+}
+
+function SeparadorOu() {
+  return <div className="separador-ou" aria-hidden="true"><span>ou</span></div>;
+}
+
+function EntradaTexto({ titulo, ajuda, valor, aoMudar, placeholder, limite }: { titulo: string; ajuda: string; valor: string; aoMudar(valor: string): void; placeholder: string; limite: number }) {
+  return (
+    <label className="campo-amplo entrada-texto">
+      <span>{titulo}</span>
+      <small>{ajuda}</small>
+      <textarea value={valor} onChange={(evento) => aoMudar(evento.target.value)} placeholder={placeholder} maxLength={limite} rows={6} />
+      {valor.length > limite * 0.8 && <small className="contador-texto">{valor.length.toLocaleString("pt-BR")} de {limite.toLocaleString("pt-BR")} caracteres</small>}
+    </label>
   );
 }
 

@@ -119,6 +119,10 @@
 .arquivos-selecionados button { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 9px; color: #839087; background: transparent; }
 .arquivos-selecionados button:hover { color: #9d4a43; background: #fff1ef; }
 
+.separador-ou { margin: 18px 0; display: flex; align-items: center; gap: 12px; color: #829188; }
+.separador-ou::before, .separador-ou::after { height: 1px; flex: 1; content: ""; background: #e0e7e3; }
+.separador-ou span { font-size: .58rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+
 .campo-amplo { margin-top: 24px; display: grid; gap: 8px; }
 .campo-amplo > span, .campo-preco > span, .linha-pagamento label > span { color: #42594f; font-size: .66rem; font-weight: 750; }
 .campo-amplo em, .linha-pagamento em { color: #84918b; font-size: .54rem; font-style: normal; font-weight: 600; }
@@ -134,9 +138,15 @@
 .campo-amplo input { min-height: 50px; padding: 0 14px; }
 .campo-amplo textarea { min-height: 94px; padding: 13px 14px; resize: vertical; line-height: 1.55; }
 .campo-amplo input:focus, .campo-amplo textarea:focus, .campo-preco input:focus, .linha-pagamento input:focus, .linha-pagamento select:focus { border-color: #4f9275; box-shadow: 0 0 0 3px rgba(47,128,100,.1); }
+.entrada-texto { margin-top: 0; }
+.entrada-texto > small { color: #75867e; font-size: .59rem; line-height: 1.5; }
+.entrada-texto textarea { min-height: 150px; }
+.entrada-texto .contador-texto { color: #8b6d39; text-align: right; }
 
 .duas-colunas-upload { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .duas-colunas-upload .upload-simples > label { min-height: 230px; }
+.fontes-imovel > div { min-width: 0; padding: 16px; border: 1px solid #e0e8e3; border-radius: 16px; background: #fbfdfc; }
+.fontes-imovel .upload-simples > label { min-height: 190px; }
 .explicacao-ia { margin-top: 22px; padding: 16px 18px; display: flex; gap: 12px; align-items: flex-start; border: 1px solid #dce8e1; border-radius: 13px; color: #3e795f; background: #f5faf7; }
 .explicacao-ia strong { color: #395247; font-size: .66rem; }
 .explicacao-ia p { margin: 5px 0 0; color: #6c7e75; font-size: .62rem; line-height: 1.5; }
